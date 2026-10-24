@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  lint-typecheck-test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: quickmenu
+          POSTGRES_PASSWORD: quickmenu
+          POSTGRES_DB: quickmenu
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U quickmenu"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgres://quickmenu:quickmenu@localhost:5432/quickmenu
+      TEST_DATABASE_URL: postgres://quickmenu:quickmenu@localhost:5432/quickmenu_test
+      JWT_ACCESS_SECRET: ci-access-secret-ci-access-secret
+      JWT_REFRESH_SECRET: ci-refresh-secret-ci-refresh-secret
+      TRACKING_SECRET: ci-tracking-secret-ci-tracking-secret
+      FRONTEND_ORIGIN: http://localhost:3000
+      PUBLIC_MENU_BASE_URL: http://localhost:3000/m
+      CLOUDINARY_CLOUD_NAME: demo
+      CLOUDINARY_API_KEY: demo
+      CLOUDINARY_API_SECRET: demo
+      TRANSLATION_PROVIDER: fake
+      MAIL_TRANSPORT: console
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Migrate
+        run: npm run db:migrate
+
+      - name: Test
+        run: npm run test
+
+      - name: Build API
+        run: npm run build:api
+
+      - name: Build Web
+        run: npm run build:web

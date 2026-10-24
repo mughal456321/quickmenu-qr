@@ -1,0 +1,610 @@
+openapi: 3.1.0
+info:
+  title: QuickMenu QR API
+  version: 0.2.0
+  description: >
+    Multi-tenant digital menu and ordering system. Base URL:
+    https://api.quickmenu.example/api/v1. This file is the single source of
+    truth for the REST contract; the WebSocket events are documented in
+    docs/03_DATABASE_API_WIREFRAMES.md section 3.7.
+  contact:
+    name: QuickMenu QR
+servers:
+  - url: http://localhost:4000/api/v1
+    description: Local development
+  - url: https://api.quickmenu.example/api/v1
+    description: Production
+
+paths:
+  /health:
+    get:
+      summary: Health check for uptime monitoring
+      operationId: health
+      security: []
+      responses:
+        "200":
+          description: Service is up and the database is reachable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+
+  /auth/register:
+    post:
+      summary: Create a restaurant and its owner account (FR-01)
+      operationId: register
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+      responses:
+        "201":
+          description: Account created; tokens issued and the refresh cookie set.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthSessionResponse"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  /auth/login:
+    post:
+      summary: Log in and receive an access token plus refresh cookie (FR-02)
+      operationId: login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Authenticated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthSessionResponse"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/InvalidCredentials"
+        "423":
+          $ref: "#/components/responses/AccountLocked"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
+  /auth/refresh:
+    post:
+      summary: Exchange the refresh cookie for a new access token (FR-03)
+      operationId: refresh
+      security: []
+      responses:
+        "200":
+          description: A new access token.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RefreshResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /auth/logout:
+    post:
+      summary: Clear the refresh cookie (FR-03)
+      operationId: logout
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Session ended.
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /auth/forgot-password:
+    post:
+      summary: Email a password reset link (FR-04)
+      operationId: forgotPassword
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ForgotPasswordRequest"
+      responses:
+        "202":
+          description: Accepted (always, even for unknown emails).
+        "400":
+          $ref: "#/components/responses/ValidationError"
+
+  /auth/reset-password:
+    post:
+      summary: Set a new password with a reset token (FR-04)
+      operationId: resetPassword
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResetPasswordRequest"
+      responses:
+        "204":
+          description: Password changed.
+        "400":
+          $ref: "#/components/responses/ValidationError"
+
+  /me:
+    get:
+      summary: Current user and restaurant (FR-05)
+      operationId: getMe
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Current session context.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MeResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /staff:
+    get:
+      summary: List kitchen accounts (FR-05, owner only)
+      operationId: listStaff
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Kitchen accounts of the caller's restaurant.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StaffListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+    post:
+      summary: Create a kitchen account (FR-05, owner only)
+      operationId: createStaff
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StaffCreateRequest"
+      responses:
+        "201":
+          description: Kitchen account created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  /staff/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    patch:
+      summary: Update, deactivate, or reset a kitchen password (FR-05, owner only)
+      operationId: updateStaff
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StaffUpdateRequest"
+      responses:
+        "200":
+          description: Updated account.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      summary: Remove a kitchen account (FR-05, owner only)
+      operationId: deleteStaff
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Account removed.
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /restaurant:
+    get:
+      summary: Read the restaurant profile (FR-01)
+      operationId: getRestaurant
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Restaurant profile.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RestaurantResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    patch:
+      summary: Edit name, default language, or currency (FR-01, owner only)
+      operationId: updateRestaurant
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RestaurantUpdateRequest"
+      responses:
+        "200":
+          description: Updated restaurant profile.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RestaurantResponse"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    HealthResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/HealthData"
+    HealthData:
+      type: object
+      required: [status, db]
+      properties:
+        status:
+          type: string
+          enum: [ok]
+        db:
+          type: string
+          enum: [up, down]
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message, requestId]
+          properties:
+            code:
+              type: string
+              description: Machine-readable error code (e.g. NOT_FOUND).
+            message:
+              type: string
+            details:
+              type: array
+              items:
+                type: object
+                properties:
+                  field:
+                    type: string
+                  issue:
+                    type: string
+            requestId:
+              type: string
+              description: Echo of the X-Request-Id header.
+
+    AuthUser:
+      type: object
+      required: [id, name, email, role, restaurantId]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+          enum: [owner, kitchen]
+        restaurantId:
+          type: string
+          format: uuid
+    User:
+      allOf:
+        - $ref: "#/components/schemas/AuthUser"
+        - type: object
+          required: [failedAttempts, lockedUntil, isActive, createdAt]
+          properties:
+            failedAttempts:
+              type: integer
+            lockedUntil:
+              type: [string, "null"]
+              format: date-time
+            isActive:
+              type: boolean
+            createdAt:
+              type: string
+              format: date-time
+    Restaurant:
+      type: object
+      required: [id, name, slug, defaultLanguage, currency, orderCounter, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        slug:
+          type: string
+        defaultLanguage:
+          type: string
+        currency:
+          type: string
+        orderCounter:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    AuthSession:
+      type: object
+      required: [accessToken, expiresIn, user]
+      properties:
+        accessToken:
+          type: string
+        expiresIn:
+          type: integer
+          example: 3600
+        user:
+          $ref: "#/components/schemas/AuthUser"
+    RefreshSession:
+      type: object
+      required: [accessToken, expiresIn, user]
+      properties:
+        accessToken:
+          type: string
+        expiresIn:
+          type: integer
+        user:
+          $ref: "#/components/schemas/AuthUser"
+
+    RegisterRequest:
+      type: object
+      required: [name, email, password, restaurantName]
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+          description: At least 8 characters with a letter and a number.
+        restaurantName:
+          type: string
+          maxLength: 120
+        defaultLanguage:
+          type: string
+          enum: [en, ur, ar, zh, fr]
+        currency:
+          type: string
+          description: 3-letter ISO currency code.
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+    ForgotPasswordRequest:
+      type: object
+      required: [email]
+      properties:
+        email:
+          type: string
+          format: email
+    ResetPasswordRequest:
+      type: object
+      required: [token, password]
+      properties:
+        token:
+          type: string
+        password:
+          type: string
+          minLength: 8
+    StaffCreateRequest:
+      type: object
+      required: [name, email, password]
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+    StaffUpdateRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        password:
+          type: string
+          minLength: 8
+        isActive:
+          type: boolean
+    RestaurantUpdateRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          maxLength: 120
+        defaultLanguage:
+          type: string
+          enum: [en, ur, ar, zh, fr]
+        currency:
+          type: string
+
+    AuthSessionResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/AuthSession"
+    RefreshResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/RefreshSession"
+    MeResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [user, restaurant]
+          properties:
+            user:
+              $ref: "#/components/schemas/User"
+            restaurant:
+              $ref: "#/components/schemas/Restaurant"
+    UserResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/User"
+    StaffListResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/User"
+    RestaurantResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/Restaurant"
+
+  responses:
+    ServiceUnavailable:
+      description: Database unreachable.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    NotFound:
+      description: Resource missing or belongs to another restaurant.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    ValidationError:
+      description: Missing or invalid fields.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Unauthorized:
+      description: Missing, invalid, or expired token (UNAUTHENTICATED).
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    InvalidCredentials:
+      description: Wrong email or password (INVALID_CREDENTIALS).
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Forbidden:
+      description: Role not allowed (FORBIDDEN).
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Conflict:
+      description: Duplicate email or resource (CONFLICT).
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    AccountLocked:
+      description: Too many failed logins (ACCOUNT_LOCKED, 15-minute lock).
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    RateLimited:
+      description: Rate limit exceeded (RATE_LIMITED).
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"

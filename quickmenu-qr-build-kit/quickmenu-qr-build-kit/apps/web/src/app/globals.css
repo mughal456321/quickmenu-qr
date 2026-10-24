@@ -1,0 +1,37 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-bg: #ffffff;
+  --color-text: #1f2937;
+  --color-primary: #f97316;
+  --color-primary-dark: #ea580c;
+  --color-muted: #6b7280;
+  --color-border: #e5e7eb;
+}
+
+html[dir="rtl"] {
+  direction: rtl;
+}
+
+body {
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Urdu Nastaliq",
+    "Jameel Noori Nastaliq", "Arabic Typesetting", "Microsoft Arabic",
+    "Simsun", sans-serif;
+}
+
+/* Large touch targets (NFR-U5) */
+button,
+a,
+[role="button"] {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Customer menu: centered 480 px column on large screens */
+.customer-shell {
+  max-width: 480px;
+  margin: 0 auto;
+}

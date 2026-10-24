@@ -1,0 +1,6 @@
+#!/usr/bin/env sh
+set -e
+npx --no -- eslint "apps/api/src/**/*.ts" "packages/shared/src/**/*.ts" "apps/web/src/**/*.{ts,tsx}"
+npx --no -- tsc --noEmit -p apps/api/tsconfig.json
+npx --no -- tsc --noEmit -p apps/web/tsconfig.json
+npx --no -- tsc --noEmit -p packages/shared/tsconfig.json
