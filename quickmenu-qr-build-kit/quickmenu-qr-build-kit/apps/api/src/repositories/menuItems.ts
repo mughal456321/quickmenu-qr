@@ -213,6 +213,26 @@ export async function getMenu(
     .filter((category) => !hasItemFilters || category.items.length > 0);
 }
 
+/**
+ * Load a specific set of items (with variants and images) for pricing. Scoped
+ * to the restaurant, so an item id from another tenant is simply absent.
+ */
+export async function getManyByIds(
+  restaurantId: string,
+  ids: string[],
+  client?: Queryable
+): Promise<MenuItemWithDetails[]> {
+  if (ids.length === 0) return [];
+  const { rows } = await db(client).query<MenuItemRow>(
+    `SELECT ${ITEM_COLUMNS}
+       FROM menu_items
+      WHERE restaurant_id = $1 AND id = ANY($2::uuid[])
+      ORDER BY display_order, created_at`,
+    [restaurantId, ids]
+  );
+  return attachDetails(rows.map(mapMenuItem), client);
+}
+
 export async function getById(
   restaurantId: string,
   id: string,

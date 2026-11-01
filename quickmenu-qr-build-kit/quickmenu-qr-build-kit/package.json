@@ -28,12 +28,14 @@
     "test:api": "cd apps/api && npm run test",
     "test:shared": "cd packages/shared && npm run test",
     "test:coverage": "cd apps/api && npm run test:coverage",
+    "test:e2e": "playwright test",
     "db:migrate": "cd apps/api && npm run db:migrate",
     "db:reset": "cd apps/api && npm run db:reset",
     "db:seed": "cd apps/api && npm run db:seed",
     "prepare": "husky"
   },
   "devDependencies": {
+    "@playwright/test": "^1.64.1",
     "@typescript-eslint/eslint-plugin": "^7.11.0",
     "@typescript-eslint/parser": "^7.11.0",
     "eslint": "^8.57.0",

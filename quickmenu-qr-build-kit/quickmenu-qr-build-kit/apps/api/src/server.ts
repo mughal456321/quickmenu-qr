@@ -11,6 +11,8 @@ import { healthRouter } from "./routes/health";
 import { authRouter } from "./routes/auth";
 import { staffRouter } from "./routes/staff";
 import { restaurantRouter } from "./routes/restaurant";
+import { publicRouter } from "./routes/public";
+import { ordersRouter } from "./routes/orders";
 
 export function createApp(): Application {
   const app = express();
@@ -19,7 +21,7 @@ export function createApp(): Application {
   app.use(helmet({ contentSecurityPolicy: false }));
   app.use(corsMiddleware);
   app.use(requestIdMiddleware);
-  app.use(express.json({ limit: "1mb" }));
+  app.use(express.json({ limit: "100kb" }));
 
   const globalLimiter: RateLimitRequestHandler = rateLimit({
     windowMs: 60_000,
@@ -40,6 +42,8 @@ export function createApp(): Application {
   app.use("/api/v1", authRouter);
   app.use("/api/v1", staffRouter);
   app.use("/api/v1", restaurantRouter);
+  app.use("/api/v1", publicRouter);
+  app.use("/api/v1", ordersRouter);
 
   app.use("*", (_req: Request, res: Response) => {
     res.status(404).json({

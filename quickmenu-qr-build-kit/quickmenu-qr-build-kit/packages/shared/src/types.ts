@@ -221,3 +221,96 @@ export interface MeResponse {
   user: User;
   restaurant: Restaurant;
 }
+
+/* ------------------------------------------------------------------ */
+/* Public menu and order DTOs (Phase 06A vertical slice)              */
+/* ------------------------------------------------------------------ */
+
+export interface PublicMenuVariant {
+  id: string;
+  name: string;
+  price: number;
+}
+
+export interface PublicMenuImage {
+  url: string;
+}
+
+export interface PublicMenuItem {
+  id: string;
+  name: string;
+  description: string | null;
+  price: number;
+  variants: PublicMenuVariant[];
+  images: PublicMenuImage[];
+  dietaryTags: string[];
+  allergens: string[];
+  isAvailable: boolean;
+}
+
+export interface PublicMenuCategory {
+  id: string;
+  name: string;
+  items: PublicMenuItem[];
+}
+
+export interface PublicMenu {
+  restaurant: { name: string; currency: string; defaultLanguage: string };
+  table: { id: string; number: string };
+  language: string;
+  categories: PublicMenuCategory[];
+}
+
+/** A line as shown to the customer / kitchen (never the client's prices). */
+export interface PublicOrderLine {
+  name: string;
+  variant: string | null;
+  quantity: number;
+  unitPrice: number;
+  specialInstructions?: string | null;
+}
+
+export interface PublicOrderCreated {
+  id: string;
+  orderNumber: number;
+  status: OrderStatus;
+  table: { number: string };
+  items: PublicOrderLine[];
+  total: number;
+  currency: string;
+  trackingToken: string;
+  createdAt: string;
+}
+
+export interface OrderTimelineEntry {
+  status: OrderStatus;
+  at: string;
+}
+
+export interface PublicOrderStatus {
+  id: string;
+  orderNumber: number;
+  status: OrderStatus;
+  table: { number: string };
+  timeline: OrderTimelineEntry[];
+  items: PublicOrderLine[];
+  total: number;
+  currency: string;
+  createdAt: string;
+}
+
+export interface KitchenOrder {
+  id: string;
+  orderNumber: number;
+  table: { number: string };
+  status: OrderStatus;
+  notes: string | null;
+  items: PublicOrderLine[];
+  createdAt: string;
+}
+
+export interface PageMeta {
+  page: number;
+  pageSize: number;
+  total: number;
+}

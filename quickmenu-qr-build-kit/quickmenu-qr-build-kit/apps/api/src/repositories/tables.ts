@@ -48,6 +48,22 @@ export async function getById(
   return rows[0] ? mapTable(rows[0]) : null;
 }
 
+/** Batch-load tables for a page of orders without a per-row query. */
+export async function getManyByIds(
+  restaurantId: string,
+  ids: string[],
+  client?: Queryable
+): Promise<RestaurantTable[]> {
+  if (ids.length === 0) return [];
+  const { rows } = await db(client).query<TableRow>(
+    `SELECT ${COLUMNS}
+       FROM restaurant_tables
+      WHERE restaurant_id = $1 AND id = ANY($2::uuid[])`,
+    [restaurantId, ids]
+  );
+  return rows.map(mapTable);
+}
+
 /** Q1: resolve a scanned QR token to its table. Not tenant-scoped by design. */
 export async function findByQrToken(
   qrToken: string,

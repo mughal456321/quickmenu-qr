@@ -1,58 +1,55 @@
 import { Request, Response, NextFunction } from "express";
 import { ZodError } from "zod";
-import { ApiError, formatError } from "../errors";
-import { env } from "../config";
+import { AppError, ValidationError, formatError } from "../errors";
+import { mapError } from "../lib/errorMapping";
+import { logger } from "../logger";
 
-function isPostgresError(err: unknown): { code?: string } | null {
-  if (err && typeof err === "object" && "code" in err) {
-    return err as { code?: string };
-  }
-  return null;
+function zodToValidationError(error: ZodError): ValidationError {
+  return new ValidationError(
+    "One or more fields are invalid.",
+    error.issues.map((issue) => ({
+      field: issue.path.join("."),
+      issue: issue.message,
+    }))
+  );
 }
 
+/**
+ * The single exit point for every failure.
+ *
+ * - Known application/domain/database errors keep their documented code.
+ * - Validation errors include a `details` list.
+ * - Anything unexpected becomes `INTERNAL_ERROR` with a generic message; the
+ *   stack is logged with the request id but never sent to the client.
+ */
 export function errorHandler(
   err: unknown,
   req: Request,
   res: Response,
-  _next: NextFunction
+  next: NextFunction
 ): void {
-  if (err instanceof ApiError) {
-    res.status(err.statusCode).json(
-      formatError(err.statusCode, err.code, err.message, req.id, err.details)
-    );
+  if (res.headersSent) {
+    next(err);
     return;
   }
-  if (err instanceof ZodError) {
-    const details = err.issues.map((i) => ({
-      field: i.path.join("."),
-      issue: i.message,
-    }));
-    res.status(400).json(
-      formatError(400, "VALIDATION_ERROR", "One or more fields are invalid.", req.id, details)
+
+  const appError =
+    err instanceof ZodError ? zodToValidationError(err) : mapError(err);
+
+  if (appError.httpStatus >= 500) {
+    logger.error(
+      {
+        requestId: req.id,
+        method: req.method,
+        path: req.path,
+        err: err instanceof Error ? { name: err.name, message: err.message, stack: err.stack } : err,
+      },
+      "unhandled error"
     );
-    return;
   }
-  const pg = isPostgresError(err);
-  if (pg && pg.code) {
-    switch (pg.code) {
-      case "23505": // unique_violation
-        res.status(409).json(
-          formatError(409, "CONFLICT", "A resource with that value already exists.", req.id)
-        );
-        return;
-      case "23503": // foreign_key_violation
-        res.status(409).json(
-          formatError(409, "CONFLICT", "Operation blocked by a related resource.", req.id)
-        );
-        return;
-      case "23514": // check_violation
-        res.status(400).json(
-          formatError(400, "VALIDATION_ERROR", "One or more fields are invalid.", req.id)
-        );
-        return;
-    }
-  }
-  const message =
-    env.NODE_ENV === "production" ? "Internal server error" : (err as Error).message;
-  res.status(500).json(formatError(500, "INTERNAL_ERROR", message, req.id));
+
+  const safe: AppError = appError;
+  res
+    .status(safe.httpStatus)
+    .json(formatError(safe.httpStatus, safe.code, safe.message, req.id, safe.details));
 }

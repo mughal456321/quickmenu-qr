@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { SUPPORTED_LANGUAGES } from "./types";
+import { SUPPORTED_LANGUAGES, orderStatusSchema } from "./types";
+import type { OrderStatus } from "./types";
 
 /** Documented API error envelope. */
 export const apiErrorSchema = z.object({
@@ -104,3 +105,81 @@ export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
 export type StaffCreateInput = z.infer<typeof staffCreateSchema>;
 export type StaffUpdateInput = z.infer<typeof staffUpdateSchema>;
 export type RestaurantUpdateInput = z.infer<typeof restaurantUpdateSchema>;
+
+/* ------------------------------------------------------------------ */
+/* Public ordering request schemas (Phase 06A)                        */
+/* ------------------------------------------------------------------ */
+
+export const orderLineSchema = z.object({
+  itemId: uuidSchema,
+  variantId: uuidSchema.nullable().optional(),
+  quantity: z
+    .number()
+    .int("Quantity must be a whole number.")
+    .min(1, "Quantity must be at least 1.")
+    .max(50, "Quantity must be at most 50."),
+  specialInstructions: z.string().trim().max(200).nullable().optional(),
+});
+
+export const publicOrderSchema = z.object({
+  qrToken: z.string().trim().min(1).max(64),
+  items: z
+    .array(orderLineSchema)
+    .min(1, "The cart is empty.")
+    .max(30, "An order can have at most 30 lines."),
+  notes: z.string().trim().max(500).nullable().optional(),
+});
+
+export const idempotencyHeadersSchema = z.object({
+  "idempotency-key": z.string().uuid("Idempotency-Key must be a UUID."),
+});
+
+export const trackingHeadersSchema = z.object({
+  "x-tracking-token": z.string().trim().min(1).max(200),
+});
+
+export const qrTokenParamsSchema = z.object({
+  qrToken: z.string().trim().min(1).max(64),
+});
+
+export const orderIdParamsSchema = z.object({
+  id: uuidSchema,
+});
+
+export const orderStatusUpdateSchema = z.object({
+  status: orderStatusSchema,
+});
+
+export const statusListSchema = z
+  .string()
+  .trim()
+  .optional()
+  .transform((value, ctx): OrderStatus[] | undefined => {
+    if (!value) return undefined;
+    const parts = value
+      .split(",")
+      .map((part) => part.trim())
+      .filter(Boolean);
+    const invalid = parts.filter((part) => !orderStatusSchema.safeParse(part).success);
+    if (invalid.length > 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `invalid status: ${invalid.join(", ")}`,
+      });
+      return z.NEVER;
+    }
+    return parts as OrderStatus[];
+  });
+
+export const orderListQuerySchema = z.object({
+  status: statusListSchema,
+  from: z.string().datetime().optional(),
+  to: z.string().datetime().optional(),
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(20),
+});
+
+export type OrderLineInput = z.infer<typeof orderLineSchema>;
+export type PublicOrderInput = z.infer<typeof publicOrderSchema>;
+export type OrderListQuery = z.infer<typeof orderListQuerySchema>;
+export type OrderStatusUpdateInput = z.infer<typeof orderStatusUpdateSchema>;

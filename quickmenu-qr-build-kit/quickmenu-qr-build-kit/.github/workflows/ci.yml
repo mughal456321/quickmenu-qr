@@ -60,8 +60,17 @@ jobs:
       - name: Test
         run: npm run test
 
+      - name: Coverage
+        run: npm run test:coverage
+
       - name: Build API
         run: npm run build:api
 
       - name: Build Web
         run: npm run build:web
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: End-to-end test
+        run: npm run test:e2e

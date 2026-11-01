@@ -187,21 +187,33 @@ export async function listItems(
   client?: Queryable
 ): Promise<OrderItem[]> {
   const { rows } = await db(client).query<OrderItemRow>(
-    `SELECT ${ORDER_ITEM_COLUMNS} FROM order_items WHERE order_id = $1 ORDER BY id`,
+    `SELECT ${ORDER_ITEM_COLUMNS} FROM order_items WHERE order_id = $1 ORDER BY item_name, id`,
     [orderId]
   );
   return rows.map(mapOrderItem);
 }
 
+export interface OrderWithTrackingHash extends Order {
+  trackingTokenHash: string;
+}
+
+type OrderWithTrackingRow = OrderRow & { tracking_token_hash: string };
+
 export interface InsertOrderInput {
   restaurantId: string;
   tableId: string;
   orderNumber: number;
-  total: number;
+  /** Decimal string or number; the service always passes a 2-decimal string. */
+  total: string | number;
   notes?: string | null;
   clientRequestId: string;
   trackingTokenHash: string;
   status?: OrderStatus;
+  /**
+   * Optional explicit id. The tracking token is derived from the order id
+   * (D-1), so the service generates the id before inserting.
+   */
+  id?: string;
 }
 
 /**
@@ -215,11 +227,12 @@ export async function insertOrder(
 ): Promise<Order | null> {
   const { rows } = await db(client).query<OrderRow>(
     `INSERT INTO orders
-       (restaurant_id, table_id, order_number, status, total, notes, client_request_id, tracking_token_hash)
-     VALUES ($1, $2, $3, COALESCE($4::order_status, 'new'), $5, $6, $7, $8)
+       (id, restaurant_id, table_id, order_number, status, total, notes, client_request_id, tracking_token_hash)
+     VALUES (COALESCE($1::uuid, gen_random_uuid()), $2, $3, $4, COALESCE($5::order_status, 'new'), $6, $7, $8, $9)
      ON CONFLICT (client_request_id) DO NOTHING
      RETURNING ${ORDER_COLUMNS}`,
     [
+      input.id ?? null,
       input.restaurantId,
       input.tableId,
       input.orderNumber,
@@ -239,7 +252,7 @@ export interface InsertOrderItemInput {
   itemName: string;
   variantName: string | null;
   quantity: number;
-  unitPrice: number;
+  unitPrice: number | string;
   specialInstructions?: string | null;
 }
 
@@ -324,4 +337,120 @@ export async function listStatusHistory(
     [restaurantId, id]
   );
   return rows.map(mapStatusHistory);
+}
+
+/* ------------------------------------------------------------------ */
+/* Phase 06A additions                                                 */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Tracking lookup by order id alone. The caller must verify the presented
+ * token against the returned hash before revealing anything (FR-29).
+ */
+export async function getByIdWithTrackingHash(
+  id: string,
+  client?: Queryable
+): Promise<OrderWithTrackingHash | null> {
+  const { rows } = await db(client).query<OrderWithTrackingRow>(
+    `SELECT ${ORDER_COLUMNS}, tracking_token_hash
+       FROM orders
+      WHERE id = $1`,
+    [id]
+  );
+  const row = rows[0];
+  if (!row) return null;
+  return { ...mapOrder(row), trackingTokenHash: row.tracking_token_hash };
+}
+
+/** Timeline for a public (token-authenticated) order; already scoped by id. */
+export async function listStatusHistoryUnscoped(
+  orderId: string,
+  client?: Queryable
+): Promise<OrderStatusHistoryEntry[]> {
+  const { rows } = await db(client).query<StatusHistoryRow>(
+    `SELECT id, order_id, status, changed_by, changed_at
+       FROM order_status_history
+      WHERE order_id = $1
+      ORDER BY changed_at`,
+    [orderId]
+  );
+  return rows.map(mapStatusHistory);
+}
+
+export interface OrderListFilters {
+  status?: OrderStatus[];
+  from?: Date | null;
+  to?: Date | null;
+  page?: number;
+  pageSize?: number;
+}
+
+/** Kitchen/owner listing with an optional status filter (FR-30, FR-35). */
+export async function listByStatuses(
+  restaurantId: string,
+  filters: OrderListFilters = {},
+  client?: Queryable
+): Promise<OrderPage> {
+  const page = Math.max(1, filters.page ?? 1);
+  const pageSize = Math.min(100, Math.max(1, filters.pageSize ?? 20));
+  const offset = (page - 1) * pageSize;
+  const statuses = filters.status && filters.status.length > 0 ? filters.status : null;
+
+  const params = [
+    restaurantId,
+    statuses,
+    filters.from ?? null,
+    filters.to ?? null,
+    pageSize,
+    offset,
+  ];
+
+  const listResult = await db(client).query<OrderRow>(
+    `SELECT ${ORDER_COLUMNS}
+       FROM orders
+      WHERE restaurant_id = $1
+        AND ($2::order_status[] IS NULL OR status = ANY($2::order_status[]))
+        AND ($3::timestamptz IS NULL OR created_at >= $3)
+        AND ($4::timestamptz IS NULL OR created_at <= $4)
+      ORDER BY created_at
+      LIMIT $5 OFFSET $6`,
+    params
+  );
+
+  const countResult = await db(client).query<{ total: string }>(
+    `SELECT count(*)::text AS total
+       FROM orders
+      WHERE restaurant_id = $1
+        AND ($2::order_status[] IS NULL OR status = ANY($2::order_status[]))
+        AND ($3::timestamptz IS NULL OR created_at >= $3)
+        AND ($4::timestamptz IS NULL OR created_at <= $4)`,
+    [restaurantId, statuses, filters.from ?? null, filters.to ?? null]
+  );
+
+  return {
+    orders: listResult.rows.map(mapOrder),
+    total: Number.parseInt(countResult.rows[0]?.total ?? "0", 10),
+  };
+}
+
+/** Batch-load lines for a page of orders (avoids N+1 queries). */
+export async function listItemsForOrders(
+  orderIds: string[],
+  client?: Queryable
+): Promise<Map<string, OrderItem[]>> {
+  const byOrder = new Map<string, OrderItem[]>();
+  if (orderIds.length === 0) return byOrder;
+  const { rows } = await db(client).query<OrderItemRow>(
+    `SELECT ${ORDER_ITEM_COLUMNS}
+       FROM order_items
+      WHERE order_id = ANY($1::uuid[])
+      ORDER BY item_name, id`,
+    [orderIds]
+  );
+  for (const row of rows) {
+    const list = byOrder.get(row.order_id) ?? [];
+    list.push(mapOrderItem(row));
+    byOrder.set(row.order_id, list);
+  }
+  return byOrder;
 }

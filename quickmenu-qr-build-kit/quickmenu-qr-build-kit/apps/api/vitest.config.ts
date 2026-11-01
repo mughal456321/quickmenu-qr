@@ -17,12 +17,21 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       reporter: ["text", "json-summary"],
-      include: ["src/services/**/*.ts"],
+      include: ["src/domain/**/*.ts", "src/services/**/*.ts"],
+      exclude: ["**/*.test.ts"],
       thresholds: {
-        lines: 80,
-        functions: 80,
-        statements: 80,
-        branches: 75,
+        // Overall backend business-logic coverage (Week 6 acceptance).
+        lines: 70,
+        functions: 70,
+        statements: 70,
+        branches: 70,
+        // The pure domain engine must stay above 90% (Part A).
+        "src/domain/**": {
+          lines: 90,
+          functions: 90,
+          statements: 90,
+          branches: 90,
+        },
       },
     },
   },

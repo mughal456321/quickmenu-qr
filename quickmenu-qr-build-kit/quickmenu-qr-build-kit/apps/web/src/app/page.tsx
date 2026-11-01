@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function Page() {
   return (
     <main className="customer-shell flex min-h-screen items-center justify-center p-6">
@@ -8,9 +10,15 @@ export default function Page() {
         <p className="mt-2 text-gray-600">
           Digital menu and ordering for cafes and restaurants.
         </p>
-        <p className="mt-6 text-sm text-gray-500">
-          Phase 01 scaffold — placeholder home page.
+        <p className="mt-3 text-sm text-gray-500">
+          Scan the QR code on your table to open the menu.
         </p>
+        <Link
+          href="/dashboard/orders"
+          className="mt-6 inline-block rounded-xl bg-orange-500 px-5 py-2.5 font-semibold text-white"
+        >
+          Staff orders
+        </Link>
       </div>
     </main>
   );
