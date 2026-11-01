@@ -138,6 +138,13 @@ npx playwright install chromium
 npm run test:e2e         # mobile 360 x 740, seeds Cafe Aroma first
 ```
 
+If the Playwright browser download is blocked on your machine, run the same
+suite through an installed browser instead:
+
+```powershell
+$env:PLAYWRIGHT_CHANNEL="msedge"; npm run test:e2e
+```
+
 Latest local results (2026-11-01):
 
 | Check | Result |
