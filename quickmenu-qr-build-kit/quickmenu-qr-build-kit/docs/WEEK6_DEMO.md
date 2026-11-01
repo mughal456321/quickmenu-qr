@@ -145,7 +145,7 @@ suite through an installed browser instead:
 $env:PLAYWRIGHT_CHANNEL="msedge"; npm run test:e2e
 ```
 
-Latest local results (2026-11-01):
+Latest results (2026-11-01):
 
 | Check | Result |
 |---|---|
@@ -154,6 +154,7 @@ Latest local results (2026-11-01):
 | `npm test` | 151 tests pass (147 API, 4 shared) |
 | `npm run test:coverage` | domain 100% stmts/branches; business logic 97.18% lines, 87.98% branches |
 | `npm run test:e2e` | 2 tests: full slice + double-tap single order |
+| GitHub Actions CI | pass — lint, typecheck, tests, coverage, both builds and Playwright ([run 41326613069](https://github.com/mughal456321/quickmenu-qr/actions/runs/41326613069)) |
 
 ## 6. Error cases to show
 
