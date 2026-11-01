@@ -4,10 +4,8 @@
 **Student:** Muhammad Haroon
 **Faculty Advisor:** Dr. Zaigham Mushtaq
 **Milestone:** Week 5 of 12 - Project Scaffolding & Core Auth Layer
-**Repository:** [PASTE GITHUB REPOSITORY URL HERE]
+**Repository:** [https://github.com/mughal456321/quickmenu-qr]
 **Branch:** `main` | **Commits:** 4 | **Pull requests merged:** 0
-
-> **Before uploading:** replace the repository URL, paste the CI run link in Section 2, and attach the evidence screenshots. Everything else below has been verified locally.
 
 ### 1. Work Completed
 
@@ -58,14 +56,13 @@ Verified locally:
 
 ### 2. Verified Deliverables
 
-| Item | Result |
-|---|---|
-| Automated tests | **47 tests passing**: 43 API tests (24 authentication, 17 repository, 2 health) plus 4 shared-package tests |
-| Auth-service coverage | **96.11% statements, 87.8% branches, 100% functions** (target: 70% or higher) |
-| All service files coverage | **95.28% statements, 84.37% branches, 100% functions** |
-| CI pipeline | Workflow defined; run link: [PASTE LATEST GITHUB ACTIONS RUN URL] |
-| Local run | `docker compose up -d`, `npm run db:migrate`, `npm run db:seed`, `npm run test` verified; API on port 4000 and web on port 3000 |
-| Evidence | [ATTACH screenshots: health endpoint, passing test run, branch protection settings, redacted login response] |
+| Item                       | Result                                                                                                                          |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| Automated tests            | **47 tests passing**: 43 API tests (24 authentication, 17 repository, 2 health) plus 4 shared-package tests                     |
+| Auth-service coverage      | **96.11% statements, 87.8% branches, 100% functions** (target: 70% or higher)                                                   |
+| All service files coverage | **95.28% statements, 84.37% branches, 100% functions**                                                                          |
+| CI pipeline                | Workflow defined; run link: [https://github.com/mughal456321/quickmenu-qr]                                                      |
+| Local run                  | `docker compose up -d`, `npm run db:migrate`, `npm run db:seed`, `npm run test` verified; API on port 4000 and web on port 3000 |
 
 Tests cover: registration and duplicate email, password policy, bcrypt-only storage, login, wrong password, no account enumeration, lockout after 5 failures and unlock after 15 minutes, refresh, logout, expired access token, forgot/reset password (hashed, expiring, single-use), `/me` authentication, kitchen account creation and login, role enforcement, cross-restaurant staff isolation, owner self-deletion block, staff update/delete, and restaurant profile update.
 
@@ -81,19 +78,19 @@ Tests cover: registration and duplicate email, password policy, bcrypt-only stor
 
 Verify that each artifact is shared as "anyone with the link" and test it in a private browser window before submitting.
 
-| Document | Week | Used for this week's work | Link |
-|---|---|---|---|
-| Software Requirements Specification (IEEE 830) | 2 | Authentication requirements FR-01 to FR-05 (Section 3.2.1), use case UC-01, security requirements NFR-S1 to S8 (Section 3.4.2) | [Open](https://claude.ai/artifact/M1eNnUTWyVoFcBg3g2ySwY) |
-| Functional requirements (FR-01 to FR-35) | 2 | Requirement IDs referenced in commits and tests | [Section 3.2](https://claude.ai/artifact/M1eNnUTWyVoFcBg3g2ySwY#32-functional-requirements) |
-| Non-functional requirements | 2 | Security, performance, and reliability targets | [Section 3.4](https://claude.ai/artifact/M1eNnUTWyVoFcBg3g2ySwY#34-non-functional-requirements-quantifiable) |
-| Architecture and Cloud Topology | 3 | Three-tier structure and folder layout | [Open](https://claude.ai/artifact/Xi5fi2Gg9PGBu6Wn28qDuT) |
-| 3-Tier Architecture diagram | 3 | Monorepo structure (web, api, data) | [Section 4](https://claude.ai/artifact/Xi5fi2Gg9PGBu6Wn28qDuT#4-3-tier-architecture) |
-| Data Flow Diagrams (Level 0 and 1) | 3 | Process 1.0 Authentication and Accounts | [Section 5](https://claude.ai/artifact/Xi5fi2Gg9PGBu6Wn28qDuT#5-data-flow-diagrams) |
-| Security architecture | 3 | JWT, bcrypt, lockout, rate limiting, tenant isolation | [Section 8](https://claude.ai/artifact/Xi5fi2Gg9PGBu6Wn28qDuT#8-security-architecture) |
-| Database, API and Wireframes | 4 | Schema, migrations, and the API contract | [Open](https://claude.ai/artifact/K5bggkXJ8Aw1YjC45bdchx) |
-| Entity-Relationship Diagram | 4 | Tables created in the database | [Section 2.2](https://claude.ai/artifact/K5bggkXJ8Aw1YjC45bdchx#22-entity-relationship-diagram) |
-| PostgreSQL DDL | 4 | Initial migration `001_init.sql` | [Section 2.10](https://claude.ai/artifact/K5bggkXJ8Aw1YjC45bdchx#210-postgresql-ddl) |
-| Authentication API contract | 4 | Endpoints in Section 3.4.1 | [Section 3.4](https://claude.ai/artifact/K5bggkXJ8Aw1YjC45bdchx#34-endpoint-catalogue) |
+| Document                                       | Week | Used for this week's work                                                                                                      | Link                                                                                                         |
+| ---------------------------------------------- | ---- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
+| Software Requirements Specification (IEEE 830) | 2    | Authentication requirements FR-01 to FR-05 (Section 3.2.1), use case UC-01, security requirements NFR-S1 to S8 (Section 3.4.2) | [Open](https://claude.ai/artifact/M1eNnUTWyVoFcBg3g2ySwY)                                                    |
+| Functional requirements (FR-01 to FR-35)       | 2    | Requirement IDs referenced in commits and tests                                                                                | [Section 3.2](https://claude.ai/artifact/M1eNnUTWyVoFcBg3g2ySwY#32-functional-requirements)                  |
+| Non-functional requirements                    | 2    | Security, performance, and reliability targets                                                                                 | [Section 3.4](https://claude.ai/artifact/M1eNnUTWyVoFcBg3g2ySwY#34-non-functional-requirements-quantifiable) |
+| Architecture and Cloud Topology                | 3    | Three-tier structure and folder layout                                                                                         | [Open](https://claude.ai/artifact/Xi5fi2Gg9PGBu6Wn28qDuT)                                                    |
+| 3-Tier Architecture diagram                    | 3    | Monorepo structure (web, api, data)                                                                                            | [Section 4](https://claude.ai/artifact/Xi5fi2Gg9PGBu6Wn28qDuT#4-3-tier-architecture)                         |
+| Data Flow Diagrams (Level 0 and 1)             | 3    | Process 1.0 Authentication and Accounts                                                                                        | [Section 5](https://claude.ai/artifact/Xi5fi2Gg9PGBu6Wn28qDuT#5-data-flow-diagrams)                          |
+| Security architecture                          | 3    | JWT, bcrypt, lockout, rate limiting, tenant isolation                                                                          | [Section 8](https://claude.ai/artifact/Xi5fi2Gg9PGBu6Wn28qDuT#8-security-architecture)                       |
+| Database, API and Wireframes                   | 4    | Schema, migrations, and the API contract                                                                                       | [Open](https://claude.ai/artifact/K5bggkXJ8Aw1YjC45bdchx)                                                    |
+| Entity-Relationship Diagram                    | 4    | Tables created in the database                                                                                                 | [Section 2.2](https://claude.ai/artifact/K5bggkXJ8Aw1YjC45bdchx#22-entity-relationship-diagram)              |
+| PostgreSQL DDL                                 | 4    | Initial migration `001_init.sql`                                                                                               | [Section 2.10](https://claude.ai/artifact/K5bggkXJ8Aw1YjC45bdchx#210-postgresql-ddl)                         |
+| Authentication API contract                    | 4    | Endpoints in Section 3.4.1                                                                                                     | [Section 3.4](https://claude.ai/artifact/K5bggkXJ8Aw1YjC45bdchx#34-endpoint-catalogue)                       |
 
 Local copies of all documents and diagrams are in `QuickMenuQR_Documentation/Project/`.
 
@@ -102,7 +99,6 @@ Local copies of all documents and diagrams are in `QuickMenuQR_Documentation/Pro
 - [ ] Create the GitHub repository and push `main`.
 - [ ] Enable branch protection for `main`.
 - [ ] Open and merge one pull request so CI runs.
-- [ ] Replace `[PASTE GITHUB REPOSITORY URL HERE]`.
-- [ ] Replace `[PASTE LATEST GITHUB ACTIONS RUN URL]`.
-- [ ] Attach the four evidence screenshots.
+- [ ] Replace `[https://github.com/mughal456321/quickmenu-qr]`.
+- [ ] Replace `[https://github.com/mughal456321/quickmenu-qr]`.
 - [ ] Confirm the Week 2, 3, and 4 artifact links are public.
