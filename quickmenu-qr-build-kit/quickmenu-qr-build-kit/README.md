@@ -37,8 +37,7 @@ quickmenu-qr-build-kit/
 │   ├── migrations/001_init.sql     # approved schema (12 tables + trigger)
 │   └── seeds/001_seed.sql          # Cafe Aroma demo data (Phase 02)
 ├── docs/                           # spec documents and diagrams
-├── prompts/                        # 00_MASTER_PROMPT.md + 10 phase prompts
-└── .github/workflows/ci.yml
+└── prompts/                        # 00_MASTER_PROMPT.md + 10 phase prompts
 ```
 
 ## Prerequisites
@@ -104,7 +103,8 @@ and `kitchen@cafearoma.pk` / `KitchenCafe2026!`.
   `npm run test:coverage` keeps services ≥ 80%.
 - `npm run lint`, `npm run typecheck`, and `npm test` all pass.
 - `npm run build` succeeds for shared, API, and web.
-- CI passes on a clean clone (`.github/workflows/ci.yml`).
+- CI passes on a clean clone (`.github/workflows/ci.yml` at the repository
+  root; the app lives in `quickmenu-qr-build-kit/quickmenu-qr-build-kit`).
 
 ## Phases
 
