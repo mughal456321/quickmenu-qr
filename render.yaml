@@ -1,0 +1,128 @@
+# Render blueprint — QuickMenu QR API
+#
+# The application lives in a nested folder inside this repository, so rootDir
+# points at the monorepo root and commands use workspace scripts. The web app is
+# deployed separately on Vercel (root directory:
+# quickmenu-qr-build-kit/quickmenu-qr-build-kit/apps/web).
+#
+# Apply with: Render Dashboard → New → Blueprint → select this repository.
+# Fill every `sync: false` variable in the dashboard before the first deploy.
+
+services:
+  - type: web
+    name: quickmenu-api-staging
+    runtime: node
+    plan: starter
+    region: singapore
+    rootDir: quickmenu-qr-build-kit/quickmenu-qr-build-kit
+    buildCommand: npm ci && npm run build:shared && npm run build:api
+    preDeployCommand: npm run db:migrate
+    startCommand: node apps/api/dist/server.js
+    healthCheckPath: /api/v1/health
+    autoDeploy: true
+    numInstances: 1
+    envVars:
+      - key: NODE_ENV
+        value: staging
+      - key: DB_POOL_MAX
+        value: "50"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: quickmenu-db-staging
+          property: connectionString
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: TRACKING_SECRET
+        generateValue: true
+      - key: FRONTEND_ORIGIN
+        sync: false
+      - key: PUBLIC_MENU_BASE_URL
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: TRANSLATION_PROVIDER
+        value: fake
+      - key: TRANSLATION_API_KEY
+        sync: false
+      - key: MAIL_TRANSPORT
+        value: console
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: SENTRY_DSN
+        sync: false
+
+  # Production is deliberately manual: promote a tested staging build by
+  # deploying the same commit from the dashboard.
+  - type: web
+    name: quickmenu-api-production
+    runtime: node
+    plan: starter
+    region: singapore
+    rootDir: quickmenu-qr-build-kit/quickmenu-qr-build-kit
+    buildCommand: npm ci && npm run build:shared && npm run build:api
+    preDeployCommand: npm run db:migrate
+    startCommand: node apps/api/dist/server.js
+    healthCheckPath: /api/v1/health
+    autoDeploy: false
+    numInstances: 1
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DB_POOL_MAX
+        value: "50"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: quickmenu-db-production
+          property: connectionString
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: TRACKING_SECRET
+        generateValue: true
+      - key: FRONTEND_ORIGIN
+        sync: false
+      - key: PUBLIC_MENU_BASE_URL
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: TRANSLATION_PROVIDER
+        value: fake
+      - key: TRANSLATION_API_KEY
+        sync: false
+      - key: MAIL_TRANSPORT
+        value: console
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: SENTRY_DSN
+        sync: false
+
+databases:
+  - name: quickmenu-db-staging
+    plan: basic-1gb
+    region: singapore
+  - name: quickmenu-db-production
+    plan: basic-1gb
+    region: singapore

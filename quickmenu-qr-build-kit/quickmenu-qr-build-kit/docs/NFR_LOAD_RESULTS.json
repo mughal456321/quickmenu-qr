@@ -1,0 +1,43 @@
+{
+  "generatedAt": "2026-11-13T13:51:23.209Z",
+  "environment": {
+    "apiUrl": "http://localhost:4001/api/v1",
+    "sessions": 500,
+    "kitchenSockets": 25,
+    "concurrency": 50,
+    "thinkTimeMsMax": 1500
+  },
+  "customerSessions": {
+    "requests": 1000,
+    "durationSeconds": 17.79,
+    "requestsPerSecond": 56.2,
+    "errorRate": 0,
+    "statuses": {
+      "200": 500,
+      "201": 500
+    },
+    "all": {
+      "p50": 19.70510000000104,
+      "p95": 90.57990000000063,
+      "p99": 234.75400000000002
+    },
+    "menu": {
+      "p50": 8.046599999999671,
+      "p95": 215.47019999999998,
+      "p99": 241.03109999999998
+    },
+    "orders": {
+      "p50": 31.165899999999965,
+      "p95": 66.30320000000029,
+      "p99": 86.17180000000008
+    }
+  },
+  "orderToKitchenMs": {
+    "samples": 20,
+    "p50": 24.948899999999412,
+    "p95": 46.14970000000176,
+    "p99": 46.736799999998766,
+    "max": 46.736799999998766
+  },
+  "ownerTokenUsed": true
+}

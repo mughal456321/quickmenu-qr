@@ -1,0 +1,1193 @@
+openapi: 3.0.3
+info:
+  title: QuickMenu QR API
+  version: 1.0.0
+  description: |
+    Multi-tenant digital menu and ordering API. All success responses use
+    `{ "data": ... }`; lists add `meta`. Errors use
+    `{ "error": { "code", "message", "details"?, "requestId" } }`.
+servers:
+  - url: http://localhost:4000/api/v1
+    description: Local development
+  - url: https://api.staging.example.com/api/v1
+    description: Staging
+tags:
+  - name: Auth
+  - name: Staff
+  - name: Restaurant
+  - name: Menu
+  - name: Tables
+  - name: Public
+  - name: Orders
+  - name: Health
+paths:
+  /health:
+    get:
+      tags: [Health]
+      summary: Liveness and database probe
+      responses:
+        "200":
+          description: Service status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      status: { type: string, example: ok }
+                      db: { type: string, enum: [up, down] }
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Create a restaurant and its owner (FR-01)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RegisterInput" }
+      responses:
+        "201":
+          description: Session created; refresh cookie set
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AuthSessionEnvelope" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/Validation" }
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Log in (FR-02, 10 requests/min/IP)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string }
+      responses:
+        "200":
+          description: Session created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AuthSessionEnvelope" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "423": { $ref: "#/components/responses/Locked" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Exchange the refresh cookie for a new access token
+      responses:
+        "200":
+          description: New access token
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AuthSessionEnvelope" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Revoke the refresh token and clear the cookie
+      security: [{ bearerAuth: [] }]
+      responses:
+        "204": { description: Logged out }
+  /auth/forgot-password:
+    post:
+      tags: [Auth]
+      summary: Request a 30-minute reset link (FR-04)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email: { type: string, format: email }
+      responses:
+        "202":
+          description: Always accepted (no account enumeration)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      message: { type: string }
+  /auth/reset-password:
+    post:
+      tags: [Auth]
+      summary: Redeem a single-use reset token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token, password]
+              properties:
+                token: { type: string }
+                password: { type: string, minLength: 8 }
+      responses:
+        "204": { description: Password updated }
+        "400": { $ref: "#/components/responses/Validation" }
+  /me:
+    get:
+      tags: [Auth]
+      summary: Current user and restaurant (FR-05)
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: Session profile
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      user: { $ref: "#/components/schemas/User" }
+                      restaurant: { $ref: "#/components/schemas/Restaurant" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+  /staff:
+    get:
+      tags: [Staff]
+      summary: List kitchen accounts
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: Staff users
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/User" }
+    post:
+      tags: [Staff]
+      summary: Create a kitchen account (FR-03)
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email, password]
+              properties:
+                name: { type: string, maxLength: 100 }
+                email: { type: string, format: email }
+                password: { type: string, minLength: 8 }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: "#/components/schemas/User" }
+        "409": { $ref: "#/components/responses/Conflict" }
+  /staff/{id}:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    patch:
+      tags: [Staff]
+      summary: Rename, reset password, activate or deactivate
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                password: { type: string, minLength: 8 }
+                isActive: { type: boolean }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: "#/components/schemas/User" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    delete:
+      tags: [Staff]
+      summary: Delete a kitchen account
+      security: [{ bearerAuth: [] }]
+      responses:
+        "204": { description: Deleted }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /restaurant:
+    get:
+      tags: [Restaurant]
+      summary: Restaurant profile
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: Profile
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: "#/components/schemas/Restaurant" }
+    patch:
+      tags: [Restaurant]
+      summary: Update profile (owner only)
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string, maxLength: 120 }
+                defaultLanguage: { type: string, enum: [en, ur, ar, zh, fr] }
+                currency: { type: string, pattern: "^[A-Z]{3}$" }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: "#/components/schemas/Restaurant" }
+        "422": { $ref: "#/components/responses/Validation" }
+  /categories:
+    get:
+      tags: [Menu]
+      summary: List categories with item counts (FR-06)
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: Categories
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/Category" }
+    post:
+      tags: [Menu]
+      summary: Create a category
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string, maxLength: 80 }
+                displayOrder: { type: integer, minimum: 0 }
+                isActive: { type: boolean }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: "#/components/schemas/Category" }
+        "422": { $ref: "#/components/responses/Validation" }
+  /categories/order:
+    put:
+      tags: [Menu]
+      summary: Reorder categories in one transaction (FR-13)
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ids]
+              properties:
+                ids:
+                  type: array
+                  minItems: 1
+                  items: { type: string, format: uuid }
+      responses:
+        "200":
+          description: New order
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/Category" }
+        "422": { $ref: "#/components/responses/Validation" }
+  /categories/{id}:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    patch:
+      tags: [Menu]
+      summary: Rename, hide or reorder a category
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                displayOrder: { type: integer }
+                isActive: { type: boolean }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: "#/components/schemas/Category" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    delete:
+      tags: [Menu]
+      summary: Delete a category; `force=true` deletes its items too (D-60)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: force
+          in: query
+          schema: { type: boolean, default: false }
+      responses:
+        "204": { description: Deleted }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+  /items:
+    get:
+      tags: [Menu]
+      summary: List items by category or search
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: categoryId
+          in: query
+          schema: { type: string, format: uuid }
+        - name: q
+          in: query
+          schema: { type: string }
+        - name: page
+          in: query
+          schema: { type: integer, minimum: 1, default: 1 }
+        - name: pageSize
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+      responses:
+        "200":
+          description: Items with variants and images
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/MenuItem" }
+                  meta: { $ref: "#/components/schemas/Meta" }
+    post:
+      tags: [Menu]
+      summary: Create an item, optionally with variants (FR-07, FR-08)
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ItemInput" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: "#/components/schemas/MenuItem" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/Validation" }
+  /items/{id}:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    get:
+      tags: [Menu]
+      summary: One item with variants and images
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: Item
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: "#/components/schemas/MenuItem" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    patch:
+      tags: [Menu]
+      summary: Update an item; `variants` replaces the whole set (D-58)
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ItemInput" }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: "#/components/schemas/MenuItem" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+    delete:
+      tags: [Menu]
+      summary: Delete an item
+      security: [{ bearerAuth: [] }]
+      responses:
+        "204": { description: Deleted }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /items/{id}/availability:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    patch:
+      tags: [Menu]
+      summary: Toggle stock; emits `menu:updated` (FR-11)
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [isAvailable]
+              properties:
+                isAvailable: { type: boolean }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: "#/components/schemas/MenuItem" }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /items/{id}/variants:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    post:
+      tags: [Menu]
+      summary: Add a variant (max 10 per item)
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/VariantInput" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: "#/components/schemas/Variant" }
+        "409": { $ref: "#/components/responses/Conflict" }
+  /variants/{id}:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    patch:
+      tags: [Menu]
+      summary: Rename, reprice or reorder a variant
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/VariantInput" }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: "#/components/schemas/Variant" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+    delete:
+      tags: [Menu]
+      summary: Delete a variant
+      security: [{ bearerAuth: [] }]
+      responses:
+        "204": { description: Deleted }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /media/upload-signature:
+    post:
+      tags: [Menu]
+      summary: Signed Cloudinary upload parameters (FR-09)
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: Signature
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      cloudName: { type: string }
+                      apiKey: { type: string }
+                      timestamp: { type: integer }
+                      folder: { type: string }
+                      signature: { type: string }
+  /items/{id}/images:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    post:
+      tags: [Menu]
+      summary: Attach an uploaded Cloudinary image (max 3)
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [publicId, url]
+              properties:
+                publicId: { type: string }
+                url: { type: string, format: uri }
+                displayOrder: { type: integer, minimum: 0 }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: "#/components/schemas/Image" }
+        "400": { $ref: "#/components/responses/Validation" }
+        "409": { $ref: "#/components/responses/Conflict" }
+  /images/{id}:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    delete:
+      tags: [Menu]
+      summary: Remove an image from an item
+      security: [{ bearerAuth: [] }]
+      responses:
+        "204": { description: Deleted }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /tables:
+    get:
+      tags: [Tables]
+      summary: List tables with menu URLs
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: Tables
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/Table" }
+    post:
+      tags: [Tables]
+      summary: Create a table and QR token (FR-14)
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [tableNumber]
+              properties:
+                tableNumber: { type: string, maxLength: 20 }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: "#/components/schemas/Table" }
+        "409": { $ref: "#/components/responses/Conflict" }
+  /tables/{id}:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    patch:
+      tags: [Tables]
+      summary: Rename or activate/deactivate a table
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                tableNumber: { type: string }
+                isActive: { type: boolean }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: "#/components/schemas/Table" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    delete:
+      tags: [Tables]
+      summary: Delete a table; blocked with orders (FR-14)
+      security: [{ bearerAuth: [] }]
+      responses:
+        "204": { description: Deleted }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+  /tables/{id}/qr:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    get:
+      tags: [Tables]
+      summary: Download a printable QR code (FR-15, FR-16)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: format
+          in: query
+          schema: { type: string, enum: [png, pdf], default: png }
+      responses:
+        "200":
+          description: QR image
+          content:
+            image/png:
+              schema: { type: string, format: binary }
+            application/pdf:
+              schema: { type: string, format: binary }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /public/menu/{qrToken}:
+    get:
+      tags: [Public]
+      summary: Translated public menu for a table (FR-17..FR-22)
+      parameters:
+        - name: qrToken
+          in: path
+          required: true
+          schema: { type: string }
+        - name: lang
+          in: query
+          schema: { type: string, enum: [en, ur, ar, zh, fr] }
+        - name: dietary
+          in: query
+          description: Comma-separated dietary tags (AND)
+          schema: { type: string }
+        - name: exclude
+          in: query
+          description: Comma-separated allergens to exclude
+          schema: { type: string }
+        - name: q
+          in: query
+          schema: { type: string }
+      responses:
+        "200":
+          description: Menu with `warnings` (for example TRANSLATION_UNAVAILABLE)
+          headers:
+            Cache-Control:
+              schema: { type: string, example: "public, max-age=5" }
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: "#/components/schemas/PublicMenu" }
+                  warnings:
+                    type: array
+                    items: { type: string }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /public/languages:
+    get:
+      tags: [Public]
+      summary: Supported languages and RTL flags
+      responses:
+        "200":
+          description: Languages
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/Language" }
+  /public/orders:
+    post:
+      tags: [Public]
+      summary: Place an order (FR-23..FR-29, idempotent)
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [qrToken, items]
+              properties:
+                qrToken: { type: string }
+                notes: { type: string, nullable: true, maxLength: 500 }
+                items:
+                  type: array
+                  minItems: 1
+                  maxItems: 30
+                  items:
+                    type: object
+                    required: [itemId, quantity]
+                    properties:
+                      itemId: { type: string, format: uuid }
+                      variantId: { type: string, format: uuid, nullable: true }
+                      quantity: { type: integer, minimum: 1, maximum: 50 }
+                      specialInstructions: { type: string, nullable: true, maxLength: 200 }
+      responses:
+        "201":
+          description: Confirmed after commit; includes the tracking token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: "#/components/schemas/PublicOrderCreated" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/Validation" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /public/orders/{id}:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    get:
+      tags: [Public]
+      summary: Tracking status for the customer
+      parameters:
+        - name: X-Tracking-Token
+          in: header
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Status and timeline
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: "#/components/schemas/PublicOrderStatus" }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /orders:
+    get:
+      tags: [Orders]
+      summary: Kitchen order list (FR-30, FR-35)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: status
+          in: query
+          description: Comma-separated statuses; defaults to new,preparing,ready
+          schema: { type: string }
+        - name: from
+          in: query
+          schema: { type: string, format: date-time }
+        - name: to
+          in: query
+          schema: { type: string, format: date-time }
+        - name: page
+          in: query
+          schema: { type: integer, minimum: 1, default: 1 }
+        - name: pageSize
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+      responses:
+        "200":
+          description: Orders with lines
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/KitchenOrder" }
+                  meta: { $ref: "#/components/schemas/Meta" }
+  /orders/{id}:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    get:
+      tags: [Orders]
+      summary: One order with its status timeline (FR-31)
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: Order detail
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: "#/components/schemas/PublicOrderStatus" }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /orders/{id}/status:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    patch:
+      tags: [Orders]
+      summary: Advance or cancel an order (FR-33)
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  type: string
+                  enum: [new, preparing, ready, served, cancelled]
+      responses:
+        "200":
+          description: Updated status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      id: { type: string, format: uuid }
+                      status: { type: string }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    refreshCookie:
+      type: apiKey
+      in: cookie
+      name: qm_refresh
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+  responses:
+    NotFound:
+      description: Resource does not exist in this restaurant
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    Unauthorized:
+      description: Missing, invalid or expired credentials
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    Locked:
+      description: Account locked for 15 minutes
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    Conflict:
+      description: State conflict (duplicate, limits, invalid transition)
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    Validation:
+      description: Invalid input
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    RateLimited:
+      description: Too many requests
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code: { type: string, example: VALIDATION_ERROR }
+            message: { type: string }
+            requestId: { type: string, format: uuid }
+            details:
+              type: array
+              items:
+                type: object
+                properties:
+                  field: { type: string }
+                  issue: { type: string }
+                  itemId: { type: string }
+                  name: { type: string }
+    RegisterInput:
+      type: object
+      required: [name, email, password, restaurantName]
+      properties:
+        name: { type: string, maxLength: 100 }
+        email: { type: string, format: email }
+        password: { type: string, minLength: 8 }
+        restaurantName: { type: string, maxLength: 120 }
+        defaultLanguage: { type: string, enum: [en, ur, ar, zh, fr] }
+        currency: { type: string, pattern: "^[A-Z]{3}$" }
+    AuthSessionEnvelope:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            accessToken: { type: string }
+            user: { $ref: "#/components/schemas/User" }
+            restaurant: { $ref: "#/components/schemas/Restaurant" }
+    User:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        restaurantId: { type: string, format: uuid }
+        email: { type: string, format: email }
+        name: { type: string }
+        role: { type: string, enum: [owner, kitchen] }
+        isActive: { type: boolean }
+        lockedUntil: { type: string, format: date-time, nullable: true }
+        createdAt: { type: string, format: date-time }
+    Restaurant:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        slug: { type: string }
+        defaultLanguage: { type: string }
+        currency: { type: string }
+        orderCounter: { type: integer }
+    Category:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        displayOrder: { type: integer }
+        isActive: { type: boolean }
+        itemCount: { type: integer }
+    VariantInput:
+      type: object
+      required: [name, price]
+      properties:
+        name: { type: string, maxLength: 60 }
+        price: { type: number, minimum: 0 }
+        displayOrder: { type: integer, minimum: 0 }
+    Variant:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        price: { type: number }
+        displayOrder: { type: integer }
+    ItemInput:
+      type: object
+      required: [categoryId, name, basePrice]
+      properties:
+        categoryId: { type: string, format: uuid }
+        name: { type: string, maxLength: 120 }
+        description: { type: string, nullable: true, maxLength: 1000 }
+        basePrice: { type: number, minimum: 0 }
+        isAvailable: { type: boolean }
+        dietaryTags:
+          type: array
+          items: { type: string }
+        allergens:
+          type: array
+          items: { type: string }
+        variants:
+          type: array
+          maxItems: 10
+          items: { $ref: "#/components/schemas/VariantInput" }
+    Image:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        publicId: { type: string }
+        url: { type: string, format: uri }
+        displayOrder: { type: integer }
+    MenuItem:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        categoryId: { type: string, format: uuid }
+        name: { type: string }
+        description: { type: string, nullable: true }
+        basePrice: { type: number }
+        isAvailable: { type: boolean }
+        dietaryTags:
+          type: array
+          items: { type: string }
+        allergens:
+          type: array
+          items: { type: string }
+        variants:
+          type: array
+          items: { $ref: "#/components/schemas/Variant" }
+        images:
+          type: array
+          items: { $ref: "#/components/schemas/Image" }
+    Table:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        tableNumber: { type: string }
+        isActive: { type: boolean }
+        menuUrl: { type: string, format: uri }
+    Language:
+      type: object
+      properties:
+        code: { type: string }
+        name: { type: string }
+        nativeName: { type: string }
+        rtl: { type: boolean }
+    PublicMenu:
+      type: object
+      properties:
+        restaurant:
+          type: object
+          properties:
+            name: { type: string }
+            currency: { type: string }
+            defaultLanguage: { type: string }
+        table:
+          type: object
+          properties:
+            number: { type: string }
+        language: { type: string }
+        categories:
+          type: array
+          items:
+            type: object
+            properties:
+              id: { type: string }
+              name: { type: string }
+              items:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id: { type: string }
+                    name: { type: string }
+                    description: { type: string, nullable: true }
+                    price: { type: number }
+                    isAvailable: { type: boolean }
+                    dietaryTags: { type: array, items: { type: string } }
+                    allergens: { type: array, items: { type: string } }
+                    variants: { type: array, items: { $ref: "#/components/schemas/Variant" } }
+                    images: { type: array, items: { $ref: "#/components/schemas/Image" } }
+    PublicOrderCreated:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        orderNumber: { type: integer }
+        status: { type: string }
+        table:
+          type: object
+          properties:
+            number: { type: string }
+        items: { type: array, items: { $ref: "#/components/schemas/OrderLine" } }
+        total: { type: number }
+        currency: { type: string }
+        trackingToken: { type: string }
+        createdAt: { type: string, format: date-time }
+    OrderLine:
+      type: object
+      properties:
+        name: { type: string }
+        variant: { type: string, nullable: true }
+        quantity: { type: integer }
+        unitPrice: { type: number }
+        specialInstructions: { type: string, nullable: true }
+    KitchenOrder:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        orderNumber: { type: integer }
+        table:
+          type: object
+          properties:
+            number: { type: string }
+        status: { type: string }
+        notes: { type: string, nullable: true }
+        items: { type: array, items: { $ref: "#/components/schemas/OrderLine" } }
+        createdAt: { type: string, format: date-time }
+    PublicOrderStatus:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        orderNumber: { type: integer }
+        status: { type: string }
+        table:
+          type: object
+          properties:
+            number: { type: string }
+        items: { type: array, items: { $ref: "#/components/schemas/OrderLine" } }
+        total: { type: number }
+        currency: { type: string }
+        timeline:
+          type: array
+          items:
+            type: object
+            properties:
+              status: { type: string }
+              at: { type: string, format: date-time }
+    Meta:
+      type: object
+      properties:
+        page: { type: integer }
+        pageSize: { type: integer }
+        total: { type: integer }
