@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { AuthSession, KitchenOrder, OrderStatus } from "@quickmenu/shared";
 import { ApiRequestError, apiRequest, formatPrice } from "../../../lib/api";
+import { useAuth } from "../../../lib/auth";
 import {
   clearStaffToken,
   getStaffToken,
@@ -34,6 +35,7 @@ const STATUS_STYLES: Record<OrderStatus, string> = {
 };
 
 export default function StaffOrdersPage() {
+  const { accessToken, logout: clearSession } = useAuth();
   const [token, setToken] = useState<string | null>(null);
   const [checking, setChecking] = useState(true);
 
@@ -68,11 +70,12 @@ export default function StaffOrdersPage() {
   }, []);
 
   useEffect(() => {
-    const stored = getStaffToken();
+    const stored = getStaffToken() ?? accessToken;
+    if (accessToken) saveStaffToken(accessToken);
     setToken(stored);
     setChecking(false);
     if (stored) void loadOrders(stored);
-  }, [loadOrders]);
+  }, [accessToken, loadOrders]);
 
   async function login(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -119,6 +122,7 @@ export default function StaffOrdersPage() {
 
   function logout() {
     clearStaffToken();
+    void clearSession();
     setToken(null);
     setOrders(null);
   }
