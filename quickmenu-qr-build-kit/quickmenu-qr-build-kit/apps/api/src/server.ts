@@ -1,3 +1,4 @@
+import { createServer } from "http";
 import express, { Application, Request, Response } from "express";
 import helmet from "helmet";
 import rateLimit, { RateLimitRequestHandler } from "express-rate-limit";
@@ -13,12 +14,31 @@ import { staffRouter } from "./routes/staff";
 import { restaurantRouter } from "./routes/restaurant";
 import { publicRouter } from "./routes/public";
 import { ordersRouter } from "./routes/orders";
+import { menuRouter } from "./routes/menu";
+import { tablesRouter } from "./routes/tables";
+import { attachRealtime, closeRealtime } from "./realtime/socket";
 
 export function createApp(): Application {
   const app = express();
 
   app.set("trust proxy", 1);
-  app.use(helmet({ contentSecurityPolicy: false }));
+  app.disable("x-powered-by");
+  // The API only serves JSON and binary QR files, so a deny-all CSP is safe.
+  // HSTS is set by helmet; it is harmless over local HTTP and required in prod.
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'none'"],
+          baseUri: ["'none'"],
+          formAction: ["'none'"],
+          frameAncestors: ["'none'"],
+        },
+      },
+      crossOriginResourcePolicy: { policy: "cross-origin" },
+      referrerPolicy: { policy: "no-referrer" },
+    })
+  );
   app.use(corsMiddleware);
   app.use(requestIdMiddleware);
   app.use(express.json({ limit: "100kb" }));
@@ -44,6 +64,8 @@ export function createApp(): Application {
   app.use("/api/v1", restaurantRouter);
   app.use("/api/v1", publicRouter);
   app.use("/api/v1", ordersRouter);
+  app.use("/api/v1", menuRouter);
+  app.use("/api/v1", tablesRouter);
 
   app.use("*", (_req: Request, res: Response) => {
     res.status(404).json({
@@ -63,12 +85,15 @@ export function createApp(): Application {
 export async function start(): Promise<void> {
   await runMigrations();
   const app = createApp();
-  const server = app.listen(env.PORT, () => {
-    logger.info({ port: env.PORT }, "API listening");
+  const server = createServer(app);
+  attachRealtime(server);
+  server.listen(env.PORT, () => {
+    logger.info({ port: env.PORT, ws: "/ws" }, "API listening");
   });
 
   const shutdown = async (signal: string): Promise<void> => {
     logger.info({ signal }, "shutting down");
+    closeRealtime();
     server.close(async () => {
       await closePool();
       process.exit(0);

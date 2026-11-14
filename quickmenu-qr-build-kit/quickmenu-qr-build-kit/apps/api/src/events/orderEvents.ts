@@ -1,8 +1,8 @@
-import type { OrderStatus } from "@quickmenu/shared";
+import type { KitchenOrder, OrderStatus } from "@quickmenu/shared";
 
 /**
- * Phase 06 seam for real-time updates. Phase 07 replaces the no-op instance
- * with a Socket.IO emitter; nothing else in the order service changes.
+ * Real-time seam: Phase 06 installs the Socket.IO emitter, services stay free
+ * of transport details.
  */
 export interface OrderCreatedEvent {
   orderId: string;
@@ -11,12 +11,15 @@ export interface OrderCreatedEvent {
   orderNumber: number;
   status: OrderStatus;
   total: number;
+  /** Full KOT payload; the socket layer broadcasts it as `order:new`. */
+  order?: KitchenOrder;
 }
 
 export interface OrderStatusChangedEvent {
   orderId: string;
   restaurantId: string;
   status: OrderStatus;
+  at?: string;
 }
 
 export interface OrderEvents {

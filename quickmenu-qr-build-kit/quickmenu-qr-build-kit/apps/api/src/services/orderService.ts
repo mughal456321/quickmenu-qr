@@ -177,6 +177,7 @@ export async function createOrder(
     throw error;
   }
 
+  const created = await buildCreated(order, restaurant.currency);
   emitOrderCreated({
     orderId: order.id,
     restaurantId: order.restaurantId,
@@ -184,9 +185,18 @@ export async function createOrder(
     orderNumber: order.orderNumber,
     status: order.status,
     total: order.total,
+    order: {
+      id: created.id,
+      orderNumber: created.orderNumber,
+      table: created.table,
+      status: created.status,
+      notes: order.notes,
+      items: created.items,
+      createdAt: created.createdAt,
+    },
   });
 
-  return { order: await buildCreated(order, restaurant.currency), replayed: false };
+  return { order: created, replayed: false };
 }
 
 async function replay(existing: Order, tableId: string): Promise<CreateOrderResult> {
@@ -283,6 +293,33 @@ export async function listOrders(
   };
 }
 
+/** FR-31: one order with its status timeline for staff. */
+export async function getOrderDetail(
+  restaurantId: string,
+  orderId: string
+): Promise<import("@quickmenu/shared").OrderDetail> {
+  const order = await ordersRepo.getById(restaurantId, orderId);
+  if (!order) throw new NotFoundError("Order not found.");
+
+  const [table, items, history] = await Promise.all([
+    tablesRepo.getById(restaurantId, order.tableId),
+    ordersRepo.listItems(order.id),
+    ordersRepo.listStatusHistory(restaurantId, order.id),
+  ]);
+
+  return {
+    id: order.id,
+    orderNumber: order.orderNumber,
+    table: { number: table?.tableNumber ?? "" },
+    status: order.status,
+    notes: order.notes,
+    items: toPublicLines(items),
+    createdAt: order.createdAt,
+    updatedAt: order.updatedAt,
+    timeline: history.map((entry) => ({ status: entry.status, at: entry.changedAt })),
+  };
+}
+
 export interface StatusChangeResult {
   id: string;
   status: Order["status"];
@@ -313,7 +350,12 @@ export async function changeOrderStatus(
     throw new NotFoundError("Order not found.");
   }
 
-  emitOrderStatusChanged({ orderId, restaurantId, status: updated.status });
+  emitOrderStatusChanged({
+    orderId,
+    restaurantId,
+    status: updated.status,
+    at: updated.updatedAt,
+  });
 
   return { id: updated.id, status: updated.status, updatedAt: updated.updatedAt };
 }

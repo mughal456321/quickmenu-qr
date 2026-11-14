@@ -18,6 +18,12 @@ ordersRouter.get(
   orderController.list
 );
 
+ordersRouter.get(
+  "/orders/:id",
+  validate({ params: orderIdParamsSchema }),
+  orderController.getDetail
+);
+
 ordersRouter.patch(
   "/orders/:id/status",
   validate({ params: orderIdParamsSchema, body: orderStatusUpdateSchema }),

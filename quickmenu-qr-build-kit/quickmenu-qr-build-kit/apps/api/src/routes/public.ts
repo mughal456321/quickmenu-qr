@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   idempotencyHeadersSchema,
   orderIdParamsSchema,
+  publicMenuQuerySchema,
   publicOrderSchema,
   qrTokenParamsSchema,
 } from "@quickmenu/shared";
@@ -14,9 +15,11 @@ export const publicRouter = Router();
 
 publicRouter.get(
   "/public/menu/:qrToken",
-  validate({ params: qrTokenParamsSchema }),
+  validate({ params: qrTokenParamsSchema, query: publicMenuQuerySchema }),
   publicMenuController.getMenu
 );
+
+publicRouter.get("/public/languages", publicMenuController.getLanguages);
 
 publicRouter.post(
   "/public/orders",

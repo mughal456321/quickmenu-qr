@@ -15,6 +15,13 @@ export const list = asyncHandler(async (req: Request, res: Response) => {
   });
 });
 
+/** FR-31: full order detail with the status timeline. */
+export const getDetail = asyncHandler(async (req: Request, res: Response) => {
+  const auth = getAuth(req);
+  const data = await orderService.getOrderDetail(auth.restaurantId, req.params.id as string);
+  res.status(200).json({ data });
+});
+
 /** FR-33: advance an order along the state machine. */
 export const changeStatus = asyncHandler(async (req: Request, res: Response) => {
   const auth = getAuth(req);
