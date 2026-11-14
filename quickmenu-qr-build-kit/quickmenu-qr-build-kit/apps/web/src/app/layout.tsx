@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { ServiceWorkerRegistrar } from "./service-worker-registrar";
+import { Providers } from "./providers";
 
 export const viewport: Viewport = {
   themeColor: "#1f2937",
@@ -27,7 +28,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="min-h-screen bg-white text-gray-900 antialiased">
-        {children}
+        <Providers>{children}</Providers>
         <ServiceWorkerRegistrar />
       </body>
     </html>
