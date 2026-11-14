@@ -19,7 +19,7 @@ export function getPool(): Pool {
     url,
     pool: new Pool({
       connectionString: url,
-      max: 20,
+      max: env.DB_POOL_MAX,
       idleTimeoutMillis: 30000,
       connectionTimeoutMillis: 5000,
     }),

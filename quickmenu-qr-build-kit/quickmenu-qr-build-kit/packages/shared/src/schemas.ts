@@ -1,5 +1,10 @@
 import { z } from "zod";
-import { SUPPORTED_LANGUAGES, orderStatusSchema } from "./types";
+import {
+  ALLOWED_ALLERGENS,
+  ALLOWED_DIETARY_TAGS,
+  SUPPORTED_LANGUAGES,
+  orderStatusSchema,
+} from "./types";
 import type { OrderStatus } from "./types";
 
 /** Documented API error envelope. */
@@ -183,3 +188,197 @@ export type OrderLineInput = z.infer<typeof orderLineSchema>;
 export type PublicOrderInput = z.infer<typeof publicOrderSchema>;
 export type OrderListQuery = z.infer<typeof orderListQuerySchema>;
 export type OrderStatusUpdateInput = z.infer<typeof orderStatusUpdateSchema>;
+
+/* ------------------------------------------------------------------ */
+/* Menu management schemas (Phase 04, FR-06..FR-13)                   */
+/* ------------------------------------------------------------------ */
+
+const TAG_TUPLE = ALLOWED_DIETARY_TAGS as unknown as [string, ...string[]];
+const ALLERGEN_TUPLE = ALLOWED_ALLERGENS as unknown as [string, ...string[]];
+
+export const dietaryTagSchema = z.enum(TAG_TUPLE);
+export const allergenSchema = z.enum(ALLERGEN_TUPLE);
+
+export const categoryCreateSchema = z
+  .object({
+    name: z.string().trim().min(1, "Name is required.").max(120),
+    isActive: z.boolean().optional(),
+    displayOrder: z.number().int().min(0).max(10_000).optional(),
+  })
+  .strict();
+
+export const categoryUpdateSchema = z
+  .object({
+    name: z.string().trim().min(1, "Name is required.").max(120).optional(),
+    isActive: z.boolean().optional(),
+    displayOrder: z.number().int().min(0).max(10_000).optional(),
+  })
+  .strict()
+  .refine((value) => Object.keys(value).length > 0, {
+    message: "Provide at least one field to update.",
+  });
+
+export const categoryReorderSchema = z
+  .object({
+    ids: z.array(uuidSchema).min(1, "Provide at least one category id.").max(200),
+  })
+  .strict();
+
+export const variantCreateSchema = z
+  .object({
+    name: z.string().trim().min(1, "Name is required.").max(80),
+    price: moneySchema.max(1_000_000, "Price must be at most 1,000,000."),
+    displayOrder: z.number().int().min(0).max(10_000).optional(),
+  })
+  .strict();
+
+export const variantUpdateSchema = z
+  .object({
+    name: z.string().trim().min(1, "Name is required.").max(80).optional(),
+    price: moneySchema.max(1_000_000, "Price must be at most 1,000,000.").optional(),
+    displayOrder: z.number().int().min(0).max(10_000).optional(),
+  })
+  .strict()
+  .refine((value) => Object.keys(value).length > 0, {
+    message: "Provide at least one field to update.",
+  });
+
+const variantsField = z
+  .array(variantCreateSchema)
+  .max(10, "An item can have at most 10 variants.")
+  .superRefine((variants, ctx) => {
+    const seen = new Set<string>();
+    for (const [index, variant] of variants.entries()) {
+      const key = variant.name.toLowerCase();
+      if (seen.has(key)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: [index, "name"],
+          message: "Variant names must be unique within an item.",
+        });
+      }
+      seen.add(key);
+    }
+  });
+
+const itemBaseSchema = z.object({
+  categoryId: uuidSchema,
+  name: z.string().trim().min(1, "Name is required.").max(120),
+  description: z.string().trim().max(1000).nullable().optional(),
+  basePrice: moneySchema.max(1_000_000, "Price must be at most 1,000,000."),
+  isAvailable: z.boolean().optional(),
+  dietaryTags: z.array(dietaryTagSchema).max(4).optional(),
+  allergens: z.array(allergenSchema).max(6).optional(),
+  displayOrder: z.number().int().min(0).max(10_000).optional(),
+});
+
+export const itemCreateSchema = itemBaseSchema
+  .extend({ variants: variantsField.optional() })
+  .strict();
+
+export const itemUpdateSchema = itemBaseSchema
+  .omit({ categoryId: true })
+  .partial()
+  .extend({
+    categoryId: uuidSchema.optional(),
+    variants: variantsField.optional(),
+  })
+  .strict()
+  .refine((value) => Object.keys(value).length > 0, {
+    message: "Provide at least one field to update.",
+  });
+
+export const itemAvailabilitySchema = z
+  .object({ isAvailable: z.boolean() })
+  .strict();
+
+export const itemImageSchema = z
+  .object({
+    publicId: z.string().trim().min(1, "publicId is required.").max(255),
+    url: z.string().url("url must be a valid URL.").max(500),
+    displayOrder: z.number().int().min(0).max(10).optional(),
+  })
+  .strict();
+
+export const itemListQuerySchema = z.object({
+  categoryId: uuidSchema.optional(),
+  q: z.string().trim().max(120).optional(),
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(20),
+});
+
+export const categoryIdParamsSchema = z.object({ id: uuidSchema });
+export const itemIdParamsSchema = z.object({ id: uuidSchema });
+export const variantIdParamsSchema = z.object({ id: uuidSchema });
+export const imageIdParamsSchema = z.object({ id: uuidSchema });
+export const tableIdParamsSchema = z.object({ id: uuidSchema });
+
+export const forceQuerySchema = z.object({
+  force: z
+    .enum(["true", "false"])
+    .optional()
+    .transform((value) => value === "true"),
+});
+
+export const tableCreateSchema = z
+  .object({ tableNumber: z.string().trim().min(1, "Table number is required.").max(20) })
+  .strict();
+
+export const tableUpdateSchema = z
+  .object({
+    tableNumber: z.string().trim().min(1).max(20).optional(),
+    isActive: z.boolean().optional(),
+  })
+  .strict()
+  .refine((value) => Object.keys(value).length > 0, {
+    message: "Provide at least one field to update.",
+  });
+
+export const qrFormatQuerySchema = z.object({
+  format: z.enum(["png", "pdf"]).default("png"),
+});
+
+/* ------------------------------------------------------------------ */
+/* Public menu query schemas (Phase 05, FR-17..FR-22)                 */
+/* ------------------------------------------------------------------ */
+
+const commaList = (schema: z.ZodTypeAny) =>
+  z
+    .string()
+    .trim()
+    .optional()
+    .transform((value, ctx): string[] | undefined => {
+      if (!value) return undefined;
+      const parts = value
+        .split(",")
+        .map((part) => part.trim())
+        .filter(Boolean);
+      const invalid = parts.filter((part) => !schema.safeParse(part).success);
+      if (invalid.length > 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `invalid value: ${invalid.join(", ")}`,
+        });
+        return z.NEVER;
+      }
+      return parts;
+    });
+
+export const publicMenuQuerySchema = z.object({
+  lang: languageSchema.optional(),
+  dietary: commaList(dietaryTagSchema),
+  exclude: commaList(allergenSchema),
+  q: z.string().trim().max(120).optional(),
+});
+
+export type CategoryCreateInput = z.infer<typeof categoryCreateSchema>;
+export type CategoryUpdateInput = z.infer<typeof categoryUpdateSchema>;
+export type ItemCreateInput = z.infer<typeof itemCreateSchema>;
+export type ItemUpdateInput = z.infer<typeof itemUpdateSchema>;
+export type VariantCreateInput = z.infer<typeof variantCreateSchema>;
+export type VariantUpdateInput = z.infer<typeof variantUpdateSchema>;
+export type ItemImageInput = z.infer<typeof itemImageSchema>;
+export type ItemListQuery = z.infer<typeof itemListQuerySchema>;
+export type TableCreateInput = z.infer<typeof tableCreateSchema>;
+export type TableUpdateInput = z.infer<typeof tableUpdateSchema>;
+export type PublicMenuQuery = z.infer<typeof publicMenuQuerySchema>;

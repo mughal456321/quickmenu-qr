@@ -261,6 +261,12 @@ export interface PublicMenu {
   categories: PublicMenuCategory[];
 }
 
+/** `warnings` sits beside `data` in the documented envelope (FR-21). */
+export interface PublicMenuEnvelope {
+  data: PublicMenu;
+  warnings: string[];
+}
+
 /** A line as shown to the customer / kitchen (never the client's prices). */
 export interface PublicOrderLine {
   name: string;
@@ -313,4 +319,51 @@ export interface PageMeta {
   page: number;
   pageSize: number;
   total: number;
+}
+
+/* ------------------------------------------------------------------ */
+/* Menu management / tables DTOs (Phases 04 and 05)                   */
+/* ------------------------------------------------------------------ */
+
+export interface CategoryWithCount extends Category {
+  itemCount: number;
+}
+
+export interface MenuItemPage {
+  items: MenuItemWithDetails[];
+  total: number;
+}
+
+/** Short-lived Cloudinary upload signature returned by the API (FR-09). */
+export interface UploadSignature {
+  timestamp: number;
+  folder: string;
+  signature: string;
+  apiKey: string;
+  cloudName: string;
+}
+
+/** Owner-facing table shape with the public URL and download links (FR-14, FR-16). */
+export interface TableWithLinks extends RestaurantTable {
+  menuUrl: string;
+  qrDownload: { png: string; pdf: string };
+}
+
+export interface MenuItemAvailability {
+  id: string;
+  isAvailable: boolean;
+}
+
+/** Owner-facing order detail with its status timeline (FR-31). */
+export interface OrderDetail extends KitchenOrder {
+  timeline: OrderTimelineEntry[];
+  updatedAt: string;
+}
+
+/** Supported language descriptor returned by `GET /public/languages` (FR-20). */
+export interface LanguageOption {
+  code: string;
+  name: string;
+  nativeName: string;
+  rtl: boolean;
 }

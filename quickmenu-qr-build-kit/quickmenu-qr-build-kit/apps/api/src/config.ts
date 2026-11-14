@@ -47,6 +47,7 @@ const envSchema = z.object({
     .default("development"),
   PORT: z.coerce.number().int().min(1).max(65535).default(4000),
   DATABASE_URL: z.string().url().default("postgres://quickmenu:quickmenu@localhost:5432/quickmenu"),
+  DB_POOL_MAX: z.coerce.number().int().min(5).max(100).default(20),
   JWT_ACCESS_SECRET: z.string().min(32),
   JWT_REFRESH_SECRET: z.string().min(32),
   TRACKING_SECRET: z.string().min(32),
