@@ -515,3 +515,175 @@ export async function deleteImage(
   );
   return (rowCount ?? 0) > 0;
 }
+
+/* ------------------------------------------------------------------ */
+/* Owner list / lookups used by the menu management API (Phase 04)    */
+/* ------------------------------------------------------------------ */
+
+/** Paginated owner item list. Variants and images are batch-loaded (no N+1). */
+export async function listPage(
+  restaurantId: string,
+  filters: { categoryId?: string; search?: string },
+  page: number,
+  pageSize: number,
+  client?: Queryable
+): Promise<{ items: MenuItemWithDetails[]; total: number }> {
+  const search = filters.search?.trim() || null;
+  const countResult = await db(client).query<{ total: string }>(
+    `SELECT count(*)::text AS total
+       FROM menu_items
+      WHERE restaurant_id = $1
+        AND ($2::uuid IS NULL OR category_id = $2)
+        AND ($3::text IS NULL OR name ILIKE '%' || $3 || '%')`,
+    [restaurantId, filters.categoryId ?? null, search]
+  );
+
+  const { rows } = await db(client).query<MenuItemRow>(
+    `SELECT ${ITEM_COLUMNS}
+       FROM menu_items
+      WHERE restaurant_id = $1
+        AND ($2::uuid IS NULL OR category_id = $2)
+        AND ($3::text IS NULL OR name ILIKE '%' || $3 || '%')
+      ORDER BY display_order, created_at
+      LIMIT $4 OFFSET $5`,
+    [restaurantId, filters.categoryId ?? null, search, pageSize, (page - 1) * pageSize]
+  );
+
+  return {
+    items: await attachDetails(rows.map(mapMenuItem), client),
+    total: Number(countResult.rows[0]?.total ?? 0),
+  };
+}
+
+export async function deleteByCategory(
+  restaurantId: string,
+  categoryId: string,
+  client?: Queryable
+): Promise<number> {
+  const { rowCount } = await db(client).query(
+    "DELETE FROM menu_items WHERE restaurant_id = $1 AND category_id = $2",
+    [restaurantId, categoryId]
+  );
+  return rowCount ?? 0;
+}
+
+export async function deleteVariantsForItem(
+  restaurantId: string,
+  itemId: string,
+  client?: Queryable
+): Promise<number> {
+  const { rowCount } = await db(client).query(
+    `DELETE FROM item_variants v
+       USING menu_items i
+      WHERE v.item_id = i.id AND i.restaurant_id = $1 AND i.id = $2`,
+    [restaurantId, itemId]
+  );
+  return rowCount ?? 0;
+}
+
+export async function countVariants(
+  restaurantId: string,
+  itemId: string,
+  client?: Queryable
+): Promise<number> {
+  const { rows } = await db(client).query<{ total: string }>(
+    `SELECT count(*)::text AS total
+       FROM item_variants v
+       JOIN menu_items i ON i.id = v.item_id
+      WHERE i.restaurant_id = $1 AND v.item_id = $2`,
+    [restaurantId, itemId]
+  );
+  return Number(rows[0]?.total ?? 0);
+}
+
+export async function getVariant(
+  restaurantId: string,
+  variantId: string,
+  client?: Queryable
+): Promise<ItemVariant | null> {
+  const { rows } = await db(client).query<VariantRow>(
+    `SELECT v.id, v.item_id, v.name, v.price, v.display_order
+       FROM item_variants v
+       JOIN menu_items i ON i.id = v.item_id
+      WHERE i.restaurant_id = $1 AND v.id = $2`,
+    [restaurantId, variantId]
+  );
+  return rows[0] ? mapVariant(rows[0]) : null;
+}
+
+export async function updateVariantById(
+  restaurantId: string,
+  variantId: string,
+  patch: UpdateVariantInput,
+  client?: Queryable
+): Promise<ItemVariant | null> {
+  const { rows } = await db(client).query<VariantRow>(
+    `UPDATE item_variants v
+        SET name = COALESCE($3, v.name),
+            price = COALESCE($4, v.price),
+            display_order = COALESCE($5, v.display_order)
+       FROM menu_items i
+      WHERE v.id = $2 AND v.item_id = i.id AND i.restaurant_id = $1
+     RETURNING v.id, v.item_id, v.name, v.price, v.display_order`,
+    [restaurantId, variantId, patch.name ?? null, patch.price ?? null, patch.displayOrder ?? null]
+  );
+  return rows[0] ? mapVariant(rows[0]) : null;
+}
+
+export async function deleteVariantById(
+  restaurantId: string,
+  variantId: string,
+  client?: Queryable
+): Promise<boolean> {
+  const { rowCount } = await db(client).query(
+    `DELETE FROM item_variants v
+       USING menu_items i
+      WHERE v.id = $2 AND v.item_id = i.id AND i.restaurant_id = $1`,
+    [restaurantId, variantId]
+  );
+  return (rowCount ?? 0) > 0;
+}
+
+export async function countImages(
+  restaurantId: string,
+  itemId: string,
+  client?: Queryable
+): Promise<number> {
+  const { rows } = await db(client).query<{ total: string }>(
+    `SELECT count(*)::text AS total
+       FROM item_images img
+       JOIN menu_items i ON i.id = img.item_id
+      WHERE i.restaurant_id = $1 AND img.item_id = $2`,
+    [restaurantId, itemId]
+  );
+  return Number(rows[0]?.total ?? 0);
+}
+
+export async function getImage(
+  restaurantId: string,
+  imageId: string,
+  client?: Queryable
+): Promise<ItemImage | null> {
+  const { rows } = await db(client).query<ImageRow>(
+    `SELECT img.id, img.item_id, img.public_id, img.url, img.display_order
+       FROM item_images img
+       JOIN menu_items i ON i.id = img.item_id
+      WHERE i.restaurant_id = $1 AND img.id = $2`,
+    [restaurantId, imageId]
+  );
+  return rows[0] ? mapImage(rows[0]) : null;
+}
+
+export async function deleteImageById(
+  restaurantId: string,
+  imageId: string,
+  client?: Queryable
+): Promise<boolean> {
+  const { rowCount } = await db(client).query(
+    `DELETE FROM item_images img
+       USING menu_items i
+      WHERE img.id = $2 AND img.item_id = i.id AND i.restaurant_id = $1`,
+    [restaurantId, imageId]
+  );
+  return (rowCount ?? 0) > 0;
+}

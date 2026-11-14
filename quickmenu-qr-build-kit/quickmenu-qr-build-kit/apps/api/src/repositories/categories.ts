@@ -137,3 +137,43 @@ export async function reorder(
   );
   return rowCount ?? 0;
 }
+
+export async function countItems(
+  restaurantId: string,
+  categoryId: string,
+  client?: Queryable
+): Promise<number> {
+  const { rows } = await db(client).query<{ total: string }>(
+    `SELECT count(*)::text AS total
+       FROM menu_items
+      WHERE restaurant_id = $1 AND category_id = $2`,
+    [restaurantId, categoryId]
+  );
+  return Number(rows[0]?.total ?? 0);
+}
+
+export async function countByRestaurant(
+  restaurantId: string,
+  client?: Queryable
+): Promise<number> {
+  const { rows } = await db(client).query<{ total: string }>(
+    "SELECT count(*)::text AS total FROM categories WHERE restaurant_id = $1",
+    [restaurantId]
+  );
+  return Number(rows[0]?.total ?? 0);
+}
+
+/** Item counts for the owner category list, in one grouped query. */
+export async function itemCounts(
+  restaurantId: string,
+  client?: Queryable
+): Promise<Map<string, number>> {
+  const { rows } = await db(client).query<{ category_id: string; total: string }>(
+    `SELECT category_id, count(*)::text AS total
+       FROM menu_items
+      WHERE restaurant_id = $1
+      GROUP BY category_id`,
+    [restaurantId]
+  );
+  return new Map(rows.map((row) => [row.category_id, Number(row.total)]));
+}

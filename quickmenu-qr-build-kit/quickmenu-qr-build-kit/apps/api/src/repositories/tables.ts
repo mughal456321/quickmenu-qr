@@ -137,3 +137,18 @@ export async function deleteTable(
   );
   return (rowCount ?? 0) > 0;
 }
+
+/** FR-14: a table with order history must be deactivated, never deleted. */
+export async function countOrders(
+  restaurantId: string,
+  tableId: string,
+  client?: Queryable
+): Promise<number> {
+  const { rows } = await db(client).query<{ total: string }>(
+    `SELECT count(*)::text AS total
+       FROM orders
+      WHERE restaurant_id = $1 AND table_id = $2`,
+    [restaurantId, tableId]
+  );
+  return Number(rows[0]?.total ?? 0);
+}

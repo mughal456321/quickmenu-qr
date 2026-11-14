@@ -124,3 +124,95 @@ export async function purgeByRestaurant(
   );
   return rowCount ?? 0;
 }
+
+/** Stable in-memory key for a cache hit. */
+export function translationCacheKey(key: TranslationKey): string {
+  return [key.entityType, key.entityId, key.field, key.language, key.sourceHash].join("|");
+}
+
+/** Q5 at menu scale: one query for every cached string on the page. */
+export async function lookupMany(
+  keys: TranslationKey[],
+  client?: Queryable
+): Promise<Map<string, string>> {
+  const result = new Map<string, string>();
+  if (keys.length === 0) return result;
+
+  const { rows } = await db(client).query<{
+    entity_type: TranslationEntity;
+    entity_id: string;
+    field: TranslationField;
+    language: string;
+    source_hash: string;
+    translated_text: string;
+  }>(
+    `SELECT t.entity_type, t.entity_id, t.field, t.language, t.source_hash, t.translated_text
+       FROM translations t
+       JOIN unnest(
+              $1::translation_entity[],
+              $2::uuid[],
+              $3::translation_field[],
+              $4::text[],
+              $5::text[]
+            ) AS k(entity_type, entity_id, field, language, source_hash)
+         ON t.entity_type = k.entity_type
+        AND t.entity_id = k.entity_id
+        AND t.field = k.field
+        AND t.language = k.language
+        AND t.source_hash = k.source_hash`,
+    [
+      keys.map((key) => key.entityType),
+      keys.map((key) => key.entityId),
+      keys.map((key) => key.field),
+      keys.map((key) => key.language),
+      keys.map((key) => key.sourceHash),
+    ]
+  );
+
+  for (const row of rows) {
+    result.set(
+      translationCacheKey({
+        entityType: row.entity_type,
+        entityId: row.entity_id,
+        field: row.field,
+        language: row.language,
+        sourceHash: row.source_hash,
+      }),
+      row.translated_text
+    );
+  }
+  return result;
+}
+
+/** Upsert all provider results in one statement. */
+export async function upsertMany(
+  inputs: UpsertTranslationInput[],
+  client?: Queryable
+): Promise<void> {
+  if (inputs.length === 0) return;
+  await db(client).query(
+    `INSERT INTO translations
+       (restaurant_id, entity_type, entity_id, field, language, source_hash, translated_text)
+     SELECT * FROM unnest(
+       $1::uuid[],
+       $2::translation_entity[],
+       $3::uuid[],
+       $4::translation_field[],
+       $5::text[],
+       $6::text[],
+       $7::text[]
+     )
+     ON CONFLICT (entity_type, entity_id, field, language)
+     DO UPDATE SET source_hash = EXCLUDED.source_hash,
+                   translated_text = EXCLUDED.translated_text`,
+    [
+      inputs.map((input) => input.restaurantId),
+      inputs.map((input) => input.entityType),
+      inputs.map((input) => input.entityId),
+      inputs.map((input) => input.field),
+      inputs.map((input) => input.language),
+      inputs.map((input) => input.sourceHash),
+      inputs.map((input) => input.translatedText),
+    ]
+  );
+}
