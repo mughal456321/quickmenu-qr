@@ -124,3 +124,10 @@ Record every choice that the documents leave open, and every deviation from them
 | D-79 | The default Tailwind utility palette and demo tiles made the product look like a scaffold, and the objective is a convincing ordering app. | A warm editorial system: cream canvas, ink text, persimmon accent, hairline borders, Instrument Serif display + Inter body, tabular numerals, a dark kitchen canvas, and shared primitives in components/ui.ts. | One vocabulary for every screen (customer, kitchen, dashboard, auth); the type pairing and restrained accent read as a designed restaurant product rather than a generated template. |
 | D-80 | The seed pointed at fictitious Cloudinary URLs, so a fresh local install showed empty menu tiles; AI image generation was unavailable in this environment. | Twelve openly licensed Wikimedia Commons photos ship in apps/web/public/demo/, square-cropped to 1000x1000 and credited in ATTRIBUTION.md; the seed stores /demo/<slug>.jpg and scripts/fetch-demo-images.mjs can reproduce them. | Real food photography makes the menu credible offline and keeps licensing explicit; Cloudinary stays the production media host, so no production behaviour changes. |
 
+### 2026-11-15 - Local dev database without Docker
+
+| # | Problem | Decision | Reason |
+|---|---|---|---|
+| D-81 | Docker Desktop reserves several gigabytes, and on a 8 GB laptop it was killed during dev, taking PostgreSQL and the running servers with it; the phone could not reach the menu. | Add an optional `npm run db:local` script (scripts/dev-db.mjs) that runs PostgreSQL 18 from node_modules via embedded-postgres, on localhost:5432 with the same quickmenu credentials and a persisted .pgdata directory. Docker Compose stays the documented default; CI is unchanged. | The dev database now costs about 60 MB instead of a multi-gigabyte VM, so it survives alongside Next.js and the API; a fresh clone still uses `docker compose up -d` with no extra steps. |
+
+

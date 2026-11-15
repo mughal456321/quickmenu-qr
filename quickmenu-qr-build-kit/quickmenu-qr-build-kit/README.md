@@ -69,6 +69,18 @@ Open `http://localhost:3000` for the entry page, or log in directly:
 The seed prints a table QR token. Open `http://localhost:3000/m/<qrToken>` on a
 phone-sized viewport to use the customer app.
 
+If Docker Desktop does not fit in the machine's memory, or it keeps getting
+killed while the dev servers run, start the same PostgreSQL without Docker:
+
+```sh
+npm run db:local   # starts PostgreSQL 18 from node_modules, data in .pgdata/
+```
+
+Run it in its own terminal and use `npm run db:migrate` / `npm run db:seed` /
+`npm run dev` in the others. It listens on the same `localhost:5432` with the
+same `quickmenu` / `quickmenu` credentials, so nothing else changes; Compose
+remains the default path and CI still uses it.
+
 ## Scripts
 
 | Script | What it does |
@@ -80,6 +92,7 @@ phone-sized viewport to use the customer app.
 | `npm run db:migrate` | Apply all migrations in order (idempotent) |
 | `npm run db:reset` | Drop all public tables and re-apply migrations |
 | `npm run db:seed` | Populate the demo restaurant (idempotent) |
+| `npm run db:local` | Run PostgreSQL from node_modules instead of Docker |
 | `npm run lint` | ESLint across all packages |
 | `npm run typecheck` | `tsc --noEmit` across all packages |
 | `npm test` | API + shared + web unit tests |
