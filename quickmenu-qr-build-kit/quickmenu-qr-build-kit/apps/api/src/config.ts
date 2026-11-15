@@ -41,6 +41,17 @@ function loadEnv(): void {
 
 loadEnv();
 
+/** One origin, or several separated by commas (local dev plus a LAN address). */
+const originList = z.string().refine(
+  (value) =>
+    value
+      .split(",")
+      .map((entry) => entry.trim())
+      .filter((entry) => entry.length > 0)
+      .every((entry) => z.string().url().safeParse(entry).success),
+  { message: "Expected one URL or a comma-separated list of URLs" },
+);
+
 const envSchema = z.object({
   NODE_ENV: z
     .enum(["development", "staging", "production", "test"])
@@ -51,7 +62,7 @@ const envSchema = z.object({
   JWT_ACCESS_SECRET: z.string().min(32),
   JWT_REFRESH_SECRET: z.string().min(32),
   TRACKING_SECRET: z.string().min(32),
-  FRONTEND_ORIGIN: z.string().url(),
+  FRONTEND_ORIGIN: originList,
   PUBLIC_MENU_BASE_URL: z.string().url(),
   CLOUDINARY_CLOUD_NAME: z.string().optional().default(""),
   CLOUDINARY_API_KEY: z.string().optional().default(""),

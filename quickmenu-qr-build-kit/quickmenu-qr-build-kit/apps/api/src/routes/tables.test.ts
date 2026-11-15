@@ -5,6 +5,7 @@ import jsQR from "jsqr";
 import request from "supertest";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { createApp } from "../server";
+import { env } from "../config";
 import { getPool } from "../db";
 import { signAccessToken } from "../lib/tokens";
 import { menuCache } from "../lib/menuCache";
@@ -199,7 +200,8 @@ describe("tables and QR codes (FR-14..FR-16)", () => {
     const png = PNG.sync.read(response.body as Buffer);
     const decoded = jsQR(new Uint8ClampedArray(png.data), png.width, png.height);
     expect(decoded?.data).toContain(qrToken);
-    expect(decoded?.data).toBe(`http://localhost:3000/m/${qrToken}`);
+    const expectedBase = env.PUBLIC_MENU_BASE_URL.replace(/\/$/, "");
+    expect(decoded?.data).toBe(`${expectedBase}/${qrToken}`);
   });
 
   it("renders a printable A6 PDF", async () => {

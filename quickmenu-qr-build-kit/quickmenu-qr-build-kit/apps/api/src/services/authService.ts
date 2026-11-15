@@ -164,7 +164,8 @@ export async function forgotPassword(email: string): Promise<void> {
   await users.deleteResetTokensForUser(user.id);
   await users.createResetToken(user.id, hash, expiresAt);
 
-  const base = env.FRONTEND_ORIGIN.replace(/\/+$/, "");
+  const [primaryOrigin] = env.FRONTEND_ORIGIN.split(",").map((origin) => origin.trim());
+  const base = primaryOrigin.replace(/\/+$/, "");
   await getMailer().sendPasswordReset({
     to: user.email,
     resetUrl: `${base}/reset-password?token=${encodeURIComponent(token)}`,

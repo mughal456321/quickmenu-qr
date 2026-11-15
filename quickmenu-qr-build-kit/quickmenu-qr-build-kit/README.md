@@ -156,6 +156,25 @@ Commons, square-cropped to 1000x1000; author, licence and source links are in
 PowerShell's `System.Drawing` for the crop). Production uploads still go to
 Cloudinary; the seed only needs URLs that work offline.
 
+## Scanning a table QR from a phone
+
+The QR code encodes `PUBLIC_MENU_BASE_URL`, and the browser bundle calls
+`NEXT_PUBLIC_API_URL`, so both must use an address the phone can reach. A phone
+cannot resolve `localhost`: that is the phone itself.
+
+1. Find the PC's LAN IPv4 address (`ipconfig`, usually `192.168.x.x`).
+2. In `apps/api/.env` set
+   `PUBLIC_MENU_BASE_URL=http://<lan-ip>:3000/m` and add the same host to the
+   allow-list: `FRONTEND_ORIGIN=http://localhost:3000,http://<lan-ip>:3000`.
+   `FRONTEND_ORIGIN` accepts a comma-separated list, so desktop and phone
+   browsing work at the same time.
+3. In `apps/web/.env.local` set `NEXT_PUBLIC_API_URL=http://<lan-ip>:4000/api/v1`.
+4. Restart both dev servers, allow inbound TCP 3000 and 4000 through the Windows
+   firewall, then download the QR again from **Dashboard -> Tables & QR codes**;
+   previously downloaded images still contain the old address.
+5. Keep the phone on the same network and open `http://<lan-ip>:3000/m/<token>`
+   to test without scanning.
+
 ## Deployment
 
 - **API:** Render web service from `render.yaml` in the repository root. Build
