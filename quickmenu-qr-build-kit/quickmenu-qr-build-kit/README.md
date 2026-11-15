@@ -137,6 +137,25 @@ Events: `order:new`, `order:status`, `order:update_status` (ack), `kot:sync`,
 | `docs/PILOT_KIT.md` | Onboarding script, owner/kitchen guides, QR stand, SUS survey |
 | `DECISIONS.md` | Every ambiguity and the choice made |
 
+## Design system and demo content
+
+The web app uses a warm editorial palette instead of default utility colours:
+cream `canvas` `#FAF7F2`, ink `#151412`, persimmon `accent` `#C2441D`, hairline
+`line` `#E9E2D8`, and a dark `night` canvas for the kitchen board. Inter is the
+body face and Instrument Serif (`display` class) carries headings and numbers;
+both are loaded with `next/font/google`. Tokens live in
+`apps/web/tailwind.config.js`, utilities (`display`, `tabular`, `no-scrollbar`,
+`safe-bottom`) in `apps/web/src/app/globals.css`, and primitives in
+`apps/web/src/components/ui.ts`.
+
+The seeded Cafe Aroma menu uses twelve dish photos that ship with the web app in
+`apps/web/public/demo/`. Each is an openly licensed image from Wikimedia
+Commons, square-cropped to 1000x1000; author, licence and source links are in
+`apps/web/public/demo/ATTRIBUTION.md`. Re-download them with
+`node scripts/fetch-demo-images.mjs` (it needs Wikipedia API access and
+PowerShell's `System.Drawing` for the crop). Production uploads still go to
+Cloudinary; the seed only needs URLs that work offline.
+
 ## Deployment
 
 - **API:** Render web service from `render.yaml` in the repository root. Build
