@@ -30,12 +30,13 @@ function sha256(value: string): string {
   return createHash("sha256").update(value).digest("hex");
 }
 
-function placeholderUrl(restaurantId: string, slug: string): { publicId: string; url: string } {
-  const publicId = `quickmenu/${restaurantId}/${slug}`;
-  return {
-    publicId,
-    url: `https://res.cloudinary.com/quickmenu-demo/image/upload/v1/${publicId}.jpg`,
-  };
+/**
+ * Demo photos ship with the web app in `apps/web/public/demo` (see the credits
+ * file there). Cloudinary is still the media host in production; the seed only
+ * needs URLs that resolve on a fresh local install.
+ */
+function demoPhotoUrl(slug: string): { publicId: string; url: string } {
+  return { publicId: `demo/${slug}`, url: `/demo/${slug}.jpg` };
 }
 
 interface CategorySpec {
@@ -55,7 +56,8 @@ interface ItemSpec {
   dietaryTags: string[];
   allergens: string[];
   variants?: VariantSpec[];
-  images?: number;
+  /** File name (without extension) in apps/web/public/demo. */
+  photo?: string;
 }
 
 const MENU: CategorySpec[] = [
@@ -68,7 +70,7 @@ const MENU: CategorySpec[] = [
         basePrice: 350,
         dietaryTags: ["vegetarian", "halal"],
         allergens: ["gluten", "soy"],
-        images: 1,
+        photo: "spring-rolls",
       },
       {
         name: "Chicken Wings",
@@ -76,7 +78,7 @@ const MENU: CategorySpec[] = [
         basePrice: 550,
         dietaryTags: ["halal"],
         allergens: [],
-        images: 1,
+        photo: "chicken-wings",
       },
       {
         name: "Loaded Fries",
@@ -84,6 +86,7 @@ const MENU: CategorySpec[] = [
         basePrice: 450,
         dietaryTags: ["vegetarian", "halal"],
         allergens: ["dairy"],
+        photo: "loaded-fries",
       },
     ],
   },
@@ -100,7 +103,7 @@ const MENU: CategorySpec[] = [
           { name: "Half", price: 700 },
           { name: "Full", price: 1200 },
         ],
-        images: 2,
+        photo: "chicken-biryani",
       },
       {
         name: "Beef Karahi",
@@ -108,7 +111,7 @@ const MENU: CategorySpec[] = [
         basePrice: 1100,
         dietaryTags: ["halal"],
         allergens: ["dairy"],
-        images: 1,
+        photo: "beef-karahi",
       },
       {
         name: "Margherita Pizza",
@@ -120,7 +123,7 @@ const MENU: CategorySpec[] = [
           { name: "Small", price: 900 },
           { name: "Large", price: 1400 },
         ],
-        images: 1,
+        photo: "margherita-pizza",
       },
       {
         name: "Chicken Burger",
@@ -128,6 +131,7 @@ const MENU: CategorySpec[] = [
         basePrice: 650,
         dietaryTags: ["halal"],
         allergens: ["gluten", "dairy", "eggs"],
+        photo: "chicken-burger",
       },
     ],
   },
@@ -140,7 +144,7 @@ const MENU: CategorySpec[] = [
         basePrice: 250,
         dietaryTags: ["vegan", "vegetarian", "halal"],
         allergens: [],
-        images: 1,
+        photo: "mint-lemonade",
       },
       {
         name: "Cappuccino",
@@ -152,6 +156,7 @@ const MENU: CategorySpec[] = [
           { name: "Regular", price: 400 },
           { name: "Large", price: 500 },
         ],
+        photo: "cappuccino",
       },
       {
         name: "Mango Lassi",
@@ -159,6 +164,7 @@ const MENU: CategorySpec[] = [
         basePrice: 300,
         dietaryTags: ["vegetarian", "halal"],
         allergens: ["dairy"],
+        photo: "mango-lassi",
       },
     ],
   },
@@ -171,7 +177,7 @@ const MENU: CategorySpec[] = [
         basePrice: 350,
         dietaryTags: ["vegetarian", "halal"],
         allergens: ["gluten", "dairy", "eggs"],
-        images: 1,
+        photo: "chocolate-brownie",
       },
       {
         name: "Kulfi",
@@ -179,6 +185,7 @@ const MENU: CategorySpec[] = [
         basePrice: 300,
         dietaryTags: ["vegetarian", "halal"],
         allergens: ["dairy", "nuts"],
+        photo: "kulfi",
       },
     ],
   },
@@ -304,17 +311,9 @@ export async function seed(): Promise<void> {
           }
         }
 
-        for (let index = 0; index < (itemSpec.images ?? 0); index += 1) {
-          const { publicId, url } = placeholderUrl(
-            restaurant.id,
-            `${item.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${index + 1}`
-          );
-          await menuItems.addImage(
-            restaurant.id,
-            item.id,
-            { publicId, url, displayOrder: index },
-            client
-          );
+        if (itemSpec.photo) {
+          const { publicId, url } = demoPhotoUrl(itemSpec.photo);
+          await menuItems.addImage(restaurant.id, item.id, { publicId, url, displayOrder: 0 }, client);
         }
 
         itemByName.set(item.name, item);
