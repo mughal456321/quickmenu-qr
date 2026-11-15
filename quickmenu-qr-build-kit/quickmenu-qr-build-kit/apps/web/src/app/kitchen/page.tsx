@@ -11,6 +11,15 @@ import { ConfirmDialog } from "../../components/ConfirmDialog";
 import { staffSocket } from "../../lib/realtime";
 import { getSoundEnabled, saveSoundEnabled } from "../../lib/storage";
 import {
+  ChefHatIcon,
+  ClockIcon,
+  LogOutIcon,
+  VolumeIcon,
+  VolumeOffIcon,
+  WifiIcon,
+  WifiOffIcon,
+} from "../../components/icons";
+import {
   applyStatus,
   BOARD_COLUMNS,
   CLEAR_DELAY_MS,
@@ -30,19 +39,10 @@ import {
 
 type Connection = "connecting" | "live" | "offline";
 
-const COLUMN_STYLES: Record<BoardStatus, { header: string; card: string }> = {
-  new: {
-    header: "border-blue-500 bg-blue-50 text-blue-900",
-    card: "border-blue-300",
-  },
-  preparing: {
-    header: "border-amber-500 bg-amber-50 text-amber-900",
-    card: "border-amber-300",
-  },
-  ready: {
-    header: "border-green-600 bg-green-50 text-green-900",
-    card: "border-green-400",
-  },
+const COLUMN_STYLES: Record<BoardStatus, { dot: string; chip: string; edge: string }> = {
+  new: { dot: "bg-accent", chip: "text-[#F3B7A1]", edge: "bg-accent" },
+  preparing: { dot: "bg-[#C08A2E]", chip: "text-[#E9C68B]", edge: "bg-[#C08A2E]" },
+  ready: { dot: "bg-[#3E8E6A]", chip: "text-[#A6D5BF]", edge: "bg-[#3E8E6A]" },
 };
 
 const COLUMN_LABELS: Record<BoardStatus, string> = {
@@ -419,16 +419,21 @@ export default function KitchenPage() {
 
   if (authStatus === "loading") {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-gray-950 text-gray-300">
-        <p role="status">Opening the kitchen board…</p>
+      <main className="flex min-h-screen items-center justify-center bg-night text-[#B5AFA5]">
+        <p className="flex items-center gap-3 text-sm" role="status">
+          <span className="h-4 w-4 animate-spin rounded-full border-2 border-night-line border-t-[#EDE9E2]" />
+          Opening the kitchen board…
+        </p>
       </main>
     );
   }
 
   if (authStatus === "anonymous") {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-gray-950 text-gray-300">
-        <p role="status">Redirecting to sign in…</p>
+      <main className="flex min-h-screen items-center justify-center bg-night text-[#B5AFA5]">
+        <p className="text-sm" role="status">
+          Redirecting to sign in…
+        </p>
       </main>
     );
   }
@@ -436,14 +441,15 @@ export default function KitchenPage() {
   const visibleColumns = filter === "all" ? BOARD_COLUMNS : [filter];
 
   return (
-    <main className="min-h-screen bg-gray-950 pb-10 text-gray-100">
-      <header className="border-b border-gray-800 bg-gray-900 px-4 py-3">
-        <div className="mx-auto flex max-w-[1600px] flex-wrap items-center gap-3">
+    <main className="min-h-screen bg-night pb-10 text-[#EDE9E2]">
+      <header className="sticky top-0 z-20 border-b border-night-line bg-[#151412]/95 backdrop-blur">
+        <div className="mx-auto flex max-w-[1600px] flex-wrap items-center gap-x-4 gap-y-3 px-4 py-3">
           <div className="min-w-0 flex-1">
-            <p className="text-xs uppercase tracking-wide text-orange-400">
-              QuickMenu QR · Kitchen
+            <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#8A8175]">
+              <ChefHatIcon size={12} />
+              Kitchen board
             </p>
-            <h1 className="truncate text-xl font-bold">
+            <h1 className="display mt-1 truncate text-[26px] leading-none text-white">
               {restaurant?.name ?? "Kitchen board"}
             </h1>
           </div>
@@ -451,24 +457,21 @@ export default function KitchenPage() {
           <div className="flex flex-wrap items-center gap-2">
             <span
               role="status"
-              className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-semibold ${
+              className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium ${
                 connection === "live"
-                  ? "bg-green-900/60 text-green-200"
+                  ? "border-[#2F5B47] bg-[#16241D] text-[#A6D5BF]"
                   : connection === "connecting"
-                    ? "bg-gray-800 text-gray-300"
-                    : "bg-red-900/70 text-red-100"
+                    ? "border-night-line bg-[#1B1917] text-[#B5AFA5]"
+                    : "border-[#6B3120] bg-[#2B140C] text-[#F3B7A1]"
               }`}
             >
-              <span
-                aria-hidden
-                className={`h-2.5 w-2.5 rounded-full ${
-                  connection === "live"
-                    ? "bg-green-400"
-                    : connection === "connecting"
-                      ? "bg-gray-400"
-                      : "bg-red-400"
-                }`}
-              />
+              {connection === "live" ? (
+                <WifiIcon size={13} />
+              ) : connection === "connecting" ? (
+                <ClockIcon size={13} />
+              ) : (
+                <WifiOffIcon size={13} />
+              )}
               {connection === "live"
                 ? "Live"
                 : connection === "connecting"
@@ -480,7 +483,7 @@ export default function KitchenPage() {
               <button
                 type="button"
                 onClick={beep}
-                className="rounded-lg bg-orange-500 px-3 py-1.5 text-sm font-semibold text-white"
+                className="rounded-full bg-accent px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-accent/90"
               >
                 Enable sound
               </button>
@@ -490,19 +493,20 @@ export default function KitchenPage() {
               type="button"
               onClick={toggleSound}
               aria-pressed={soundOn}
-              className={`rounded-lg border px-3 py-1.5 text-sm font-semibold ${
+              className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition ${
                 soundOn
-                  ? "border-green-500 bg-green-900/40 text-green-200"
-                  : "border-gray-600 bg-gray-800 text-gray-300"
+                  ? "border-[#2F5B47] bg-[#16241D] text-[#A6D5BF]"
+                  : "border-night-line bg-[#1B1917] text-[#B5AFA5] hover:text-[#EDE9E2]"
               }`}
             >
+              {soundOn ? <VolumeIcon size={13} /> : <VolumeOffIcon size={13} />}
               Sound {soundOn ? "ON" : "OFF"}
             </button>
 
             {user?.role === "owner" && (
               <Link
                 href="/dashboard/menu"
-                className="rounded-lg border border-gray-600 px-3 py-1.5 text-sm font-semibold text-gray-200"
+                className="rounded-full border border-night-line px-3 py-1.5 text-xs font-medium text-[#B5AFA5] transition hover:text-[#EDE9E2]"
               >
                 Dashboard
               </Link>
@@ -511,8 +515,9 @@ export default function KitchenPage() {
             <button
               type="button"
               onClick={() => void signOut()}
-              className="rounded-lg border border-gray-600 px-3 py-1.5 text-sm font-semibold text-gray-200"
+              className="flex items-center gap-1.5 rounded-full border border-night-line px-3 py-1.5 text-xs font-medium text-[#B5AFA5] transition hover:text-[#EDE9E2]"
             >
+              <LogOutIcon size={13} />
               Log out
             </button>
           </div>
@@ -522,7 +527,7 @@ export default function KitchenPage() {
       {connection === "offline" && (
         <div
           role="alert"
-          className="border-b border-red-700 bg-red-700 px-4 py-2 text-center text-sm font-semibold text-white"
+          className="border-b border-[#5A2A12] bg-[#3A1A0C] px-4 py-2.5 text-center text-[13px] font-medium text-[#F3B7A1]"
         >
           Reconnecting… Showing the latest orders and refreshing every 5 seconds.
         </div>
@@ -531,7 +536,7 @@ export default function KitchenPage() {
       {listError && (
         <p
           role="alert"
-          className="mx-auto mt-3 max-w-[1600px] rounded-lg bg-red-950 px-4 py-2 text-sm text-red-200"
+          className="mx-auto mt-3 max-w-[1600px] rounded-xl border border-[#5A2A12] bg-[#2B140C] px-4 py-2.5 text-[13px] text-[#F3B7A1]"
         >
           {listError}
         </p>
@@ -539,7 +544,7 @@ export default function KitchenPage() {
 
       <nav
         aria-label="Order filters"
-        className="mx-auto flex max-w-[1600px] gap-2 overflow-x-auto px-4 py-3"
+        className="no-scrollbar mx-auto flex max-w-[1600px] gap-2 overflow-x-auto px-4 py-4"
       >
         {(
           [
@@ -553,19 +558,25 @@ export default function KitchenPage() {
             value === "all"
               ? orders.filter((order) => isBoardStatus(order.status)).length
               : counts[value];
+          const selected = filter === value;
           return (
             <button
               key={value}
               type="button"
               onClick={() => setFilter(value)}
-              aria-pressed={filter === value}
-              className={`whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold ${
-                filter === value
-                  ? "bg-orange-500 text-white"
-                  : "bg-gray-800 text-gray-300"
+              aria-pressed={selected}
+              className={`flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-[13px] font-medium transition ${
+                selected
+                  ? "bg-[#EDE9E2] text-night"
+                  : "border border-night-line text-[#B5AFA5] hover:border-[#3A3733] hover:text-[#EDE9E2]"
               }`}
             >
-              {label} ({count})
+              {label}
+              <span
+                className={`tabular text-[11px] ${selected ? "text-night/55" : "text-[#8A8175]"}`}
+              >
+                {count}
+              </span>
             </button>
           );
         })}
@@ -588,21 +599,27 @@ export default function KitchenPage() {
             <section
               key={column}
               aria-labelledby={`column-${column}`}
-              className="rounded-2xl bg-gray-900/60 p-2"
+              className="rounded-2xl border border-night-line/60 bg-[#161512] p-2.5"
             >
               <h2
                 id={`column-${column}`}
-                className={`flex items-center justify-between rounded-xl border-l-4 px-3 py-2 text-base font-bold ${COLUMN_STYLES[column].header}`}
+                className="flex items-center gap-2 px-1.5 pb-2.5 pt-1"
               >
-                <span>{COLUMN_LABELS[column]}</span>
-                <span className="rounded-full bg-white/70 px-2 py-0.5 text-sm text-gray-900">
+                <span
+                  aria-hidden
+                  className={`h-1.5 w-1.5 rounded-full ${COLUMN_STYLES[column].dot}`}
+                />
+                <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#B5AFA5]">
+                  {COLUMN_LABELS[column]}
+                </span>
+                <span className={`ms-auto text-xs font-medium tabular ${COLUMN_STYLES[column].chip}`}>
                   {counts[column]}
                 </span>
               </h2>
 
-              <div className="mt-2 space-y-2">
+              <div className="space-y-2.5">
                 {columnOrders.length === 0 && (
-                  <p className="rounded-xl border border-dashed border-gray-700 px-3 py-8 text-center text-sm text-gray-500">
+                  <p className="rounded-xl border border-dashed border-night-line px-3 py-10 text-center text-[13px] text-[#6F6A62]">
                     No orders
                   </p>
                 )}
@@ -618,51 +635,55 @@ export default function KitchenPage() {
                     <article
                       key={order.id}
                       aria-label={`Order ${order.orderNumber}, table ${order.table.number}`}
-                      className={`rounded-xl border-2 bg-white p-3 text-gray-900 shadow-lg transition ${
-                        COLUMN_STYLES[column].card
-                      } ${clearing ? "opacity-60" : ""} ${
-                        flashing ? "ring-4 ring-orange-400" : ""
-                      }`}
+                      className={`relative overflow-hidden rounded-xl bg-[#FBF8F2] p-3.5 text-ink shadow-lift transition ${
+                        clearing ? "opacity-55" : ""
+                      } ${flashing ? "ring-2 ring-accent ring-offset-2 ring-offset-night" : ""}`}
                     >
+                      <span
+                        aria-hidden
+                        className={`absolute inset-x-0 top-0 h-[3px] ${COLUMN_STYLES[column].edge}`}
+                      />
+
                       <div className="flex items-start justify-between gap-2">
                         <div>
-                          <p className="text-xl font-extrabold leading-tight">
+                          <p className="text-[22px] font-semibold leading-none tabular">
                             #{order.orderNumber}
                           </p>
-                          <p className="text-base font-semibold text-gray-700">
+                          <p className="mt-1 text-[13px] font-medium text-ink2">
                             Table {order.table.number}
                           </p>
                         </div>
                         <div className="text-right">
                           <span
-                            className={`inline-block rounded-full px-2 py-0.5 text-xs font-bold uppercase tracking-wide ${
+                            className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] ${
                               order.status === "new"
-                                ? "bg-blue-100 text-blue-800"
+                                ? "bg-accent-soft text-accent"
                                 : order.status === "preparing"
-                                  ? "bg-amber-100 text-amber-900"
+                                  ? "bg-[#FBF0DC] text-[#8A5A05]"
                                   : order.status === "ready"
-                                    ? "bg-green-100 text-green-800"
-                                    : "bg-gray-200 text-gray-700"
+                                    ? "bg-success-soft text-success"
+                                    : "bg-[#F0EDE6] text-ink2"
                             }`}
                           >
                             {STATUS_LABELS[order.status]}
                           </span>
-                          <p className="mt-1 text-sm font-semibold text-gray-500">
+                          <p className="mt-1.5 flex items-center justify-end gap-1 text-[11px] font-medium tabular text-muted">
+                            <ClockIcon size={11} />
                             {minutes} min{minutes === 1 ? "" : "s"}
                           </p>
                         </div>
                       </div>
 
-                      <ul className="mt-2 space-y-1 border-t border-gray-100 pt-2">
+                      <ul className="mt-3 space-y-1.5 border-t border-line pt-2.5">
                         {order.items.map((item, index) => (
-                          <li key={`${order.id}-${index}`} className="text-sm">
-                            <span className="font-bold">{item.quantity}×</span>{" "}
+                          <li key={`${order.id}-${index}`} className="text-[13px] leading-snug">
+                            <span className="font-semibold tabular">{item.quantity}×</span>{" "}
                             <span className="font-medium">{item.name}</span>
                             {item.variant && (
-                              <span className="text-gray-500"> · {item.variant}</span>
+                              <span className="text-muted"> · {item.variant}</span>
                             )}
                             {item.specialInstructions && (
-                              <p className="ml-4 mt-1 rounded bg-yellow-100 px-2 py-1 text-xs font-medium text-yellow-900">
+                              <p className="ms-4 mt-1 rounded-md bg-[#FBF0DC] px-2 py-1 text-[11.5px] font-medium text-[#8A5A05]">
                                 {item.specialInstructions}
                               </p>
                             )}
@@ -671,13 +692,13 @@ export default function KitchenPage() {
                       </ul>
 
                       {order.notes && (
-                        <p className="mt-2 rounded-lg bg-yellow-200 px-2 py-1.5 text-sm font-semibold text-yellow-950">
+                        <p className="mt-2 rounded-lg border border-[#EBD9B4] bg-[#FDF6E7] px-2 py-1.5 text-[12.5px] font-medium text-[#7A4A05]">
                           Note: {order.notes}
                         </p>
                       )}
 
                       {clearing ? (
-                        <p className="mt-3 text-center text-sm font-semibold text-gray-500">
+                        <p className="mt-3 text-center text-[12px] font-medium text-muted">
                           {STATUS_LABELS[order.status]} — clearing in 10 seconds
                         </p>
                       ) : (
@@ -687,7 +708,7 @@ export default function KitchenPage() {
                               type="button"
                               disabled={pendingId === order.id}
                               onClick={() => void advance(order, action.status)}
-                              className="flex-1 rounded-xl bg-gray-900 px-3 py-3 text-sm font-bold text-white disabled:opacity-60"
+                              className="flex-1 rounded-xl bg-night px-3 py-3 text-[13px] font-semibold text-[#FAF7F2] transition hover:bg-[#241F1B] disabled:opacity-60"
                             >
                               {pendingId === order.id ? "Saving…" : action.label}
                             </button>
@@ -696,7 +717,7 @@ export default function KitchenPage() {
                             type="button"
                             disabled={pendingId === order.id}
                             onClick={() => setConfirmCancel(order)}
-                            className="rounded-xl border-2 border-red-200 px-3 py-3 text-sm font-bold text-red-700 disabled:opacity-60"
+                            className="rounded-xl border border-line px-3 py-3 text-[13px] font-medium text-muted transition hover:border-danger/40 hover:text-danger disabled:opacity-60"
                           >
                             Cancel
                           </button>

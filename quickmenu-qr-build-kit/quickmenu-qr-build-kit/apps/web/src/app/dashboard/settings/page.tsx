@@ -8,6 +8,7 @@ import { useAuth } from "../../../lib/auth";
 import { useToast } from "../../../components/Toast";
 import {
   cardClass,
+  eyebrowClass,
   inputClass,
   labelClass,
   primaryButton,
@@ -95,13 +96,17 @@ export default function SettingsPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-5">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-gray-900">Settings</h1>
-        <p className="text-sm text-gray-500">
+        <p className={eyebrowClass}>Restaurant</p>
+        <h1 className="display mt-1.5 text-[30px] leading-none text-ink">Settings</h1>
+        <p className="mt-1.5 text-[13px] text-muted">
           Restaurant profile and the defaults used on every table menu.
         </p>
       </div>
 
-      <form onSubmit={(event) => void save(event)} className={`${cardClass} space-y-4`}>
+      <form
+        onSubmit={(event) => void save(event)}
+        className={`${cardClass} space-y-4 p-4 sm:p-5`}
+      >
         <label className={labelClass}>
           Restaurant name
           <input
@@ -109,7 +114,7 @@ export default function SettingsPage() {
             onChange={(event) => setForm({ ...form, name: event.target.value })}
             className={inputClass}
           />
-          {errors.name && <span className="text-xs text-red-600">{errors.name}</span>}
+          {errors.name && <span className="text-xs text-danger">{errors.name}</span>}
         </label>
 
         <div className="grid gap-4 sm:grid-cols-2">
@@ -140,7 +145,7 @@ export default function SettingsPage() {
               className={inputClass}
             />
             {errors.currency && (
-              <span className="text-xs text-red-600">{errors.currency}</span>
+              <span className="text-xs text-danger">{errors.currency}</span>
             )}
           </label>
         </div>
@@ -150,26 +155,26 @@ export default function SettingsPage() {
         </button>
       </form>
 
-      <section className={`${cardClass} text-sm text-gray-600`}>
-        <h2 className="text-lg font-bold text-gray-900">Account</h2>
-        <dl className="mt-3 grid gap-2 sm:grid-cols-2">
+      <section className={`${cardClass} p-4 sm:p-5`}>
+        <h2 className={eyebrowClass}>Account</h2>
+        <dl className="mt-3 grid gap-4 sm:grid-cols-2">
           <div>
-            <dt className="text-xs uppercase tracking-wide text-gray-400">Signed in as</dt>
-            <dd className="font-medium text-gray-800">{user?.email}</dd>
+            <dt className="text-[10px] uppercase tracking-[0.12em] text-muted">Signed in as</dt>
+            <dd className="mt-0.5 text-[13px] font-medium text-ink">{user?.email}</dd>
           </div>
           <div>
-            <dt className="text-xs uppercase tracking-wide text-gray-400">Role</dt>
-            <dd className="font-medium capitalize text-gray-800">{user?.role}</dd>
+            <dt className="text-[10px] uppercase tracking-[0.12em] text-muted">Role</dt>
+            <dd className="mt-0.5 text-[13px] font-medium capitalize text-ink">{user?.role}</dd>
           </div>
           <div>
-            <dt className="text-xs uppercase tracking-wide text-gray-400">Menu slug</dt>
-            <dd className="font-medium text-gray-800">{restaurant?.slug}</dd>
+            <dt className="text-[10px] uppercase tracking-[0.12em] text-muted">Menu slug</dt>
+            <dd className="mt-0.5 text-[13px] font-medium text-ink">{restaurant?.slug}</dd>
           </div>
           <div>
-            <dt className="text-xs uppercase tracking-wide text-gray-400">
+            <dt className="text-[10px] uppercase tracking-[0.12em] text-muted">
               Orders processed
             </dt>
-            <dd className="font-medium text-gray-800">
+            <dd className="mt-0.5 text-[13px] font-medium tabular text-ink">
               {restaurant?.orderCounter ?? 0}
             </dd>
           </div>

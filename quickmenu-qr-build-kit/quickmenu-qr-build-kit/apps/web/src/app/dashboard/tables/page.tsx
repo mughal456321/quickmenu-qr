@@ -6,8 +6,10 @@ import { ApiRequestError, apiBlob, apiRequest, apiVoid } from "../../../lib/api"
 import { useAuth } from "../../../lib/auth";
 import { useToast } from "../../../components/Toast";
 import { ConfirmDialog } from "../../../components/ConfirmDialog";
+import { DownloadIcon } from "../../../components/icons";
 import {
   cardClass,
+  eyebrowClass,
   inputClass,
   labelClass,
   primaryButton,
@@ -39,14 +41,14 @@ function QrPreview({ tableId, label }: { tableId: string; label: string }) {
 
   if (failed) {
     return (
-      <div className="flex h-40 items-center justify-center rounded-xl bg-gray-50 text-xs text-gray-500">
+      <div className="flex h-40 items-center justify-center rounded-xl bg-canvas text-[11.5px] text-muted">
         Preview unavailable
       </div>
     );
   }
   if (!url) {
     return (
-      <div className="flex h-40 items-center justify-center rounded-xl bg-gray-50 text-xs text-gray-500">
+      <div className="flex h-40 items-center justify-center rounded-xl bg-canvas text-[11.5px] text-muted">
         Loading QR…
       </div>
     );
@@ -55,7 +57,7 @@ function QrPreview({ tableId, label }: { tableId: string; label: string }) {
     <img
       src={url}
       alt={`QR code for ${label}`}
-      className="mx-auto h-40 w-40 rounded-xl border border-gray-200 bg-white p-2"
+      className="mx-auto h-40 w-40 rounded-xl border border-line bg-white p-2"
     />
   );
 }
@@ -190,15 +192,19 @@ export default function TablesPage() {
   return (
     <div className="mx-auto max-w-6xl space-y-5">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-gray-900">
+        <p className={eyebrowClass}>Tables</p>
+        <h1 className="display mt-1.5 text-[30px] leading-none text-ink">
           Tables &amp; QR codes
         </h1>
-        <p className="text-sm text-gray-500">
+        <p className="mt-1.5 text-[13px] text-muted">
           Print one code per table. Scanning opens that table&apos;s menu.
         </p>
       </div>
 
-      <form onSubmit={(event) => void addTable(event)} className={`${cardClass} flex flex-wrap items-end gap-3`}>
+      <form
+        onSubmit={(event) => void addTable(event)}
+        className={`${cardClass} flex flex-wrap items-end gap-3 p-4 sm:p-5`}
+      >
         <label className={`${labelClass} min-w-[180px] flex-1`}>
           Table number or name
           <input
@@ -215,30 +221,31 @@ export default function TablesPage() {
       </form>
 
       {tables === null && (
-        <p className="text-gray-500" role="status">
+        <p className="flex items-center gap-3 text-[13px] text-muted" role="status">
+          <span className="h-4 w-4 animate-spin rounded-full border-2 border-line border-t-ink" />
           Loading tables…
         </p>
       )}
 
       {tables && tables.length === 0 && (
-        <p className={`${cardClass} text-center text-gray-500`}>
+        <p className={`${cardClass} px-5 py-10 text-center text-[13px] text-muted`}>
           No tables yet. Add your first table to generate a QR code.
         </p>
       )}
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {tables?.map((table) => (
-          <article key={table.id} className={cardClass}>
+          <article key={table.id} className={`${cardClass} p-4`}>
             <div className="flex items-start justify-between gap-2">
               <div>
-                <h2 className="text-lg font-bold text-gray-900">
+                <h2 className="display text-[20px] leading-tight text-ink">
                   Table {table.tableNumber}
                 </h2>
                 <span
-                  className={`mt-1 inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${
+                  className={`mt-1.5 inline-block rounded-full px-2 py-0.5 text-[10.5px] font-semibold uppercase tracking-[0.08em] ${
                     table.isActive
-                      ? "bg-green-100 text-green-800"
-                      : "bg-gray-200 text-gray-700"
+                      ? "bg-success-soft text-success"
+                      : "bg-canvas text-muted ring-1 ring-line"
                   }`}
                 >
                   {table.isActive ? "Active" : "Inactive"}
@@ -256,11 +263,11 @@ export default function TablesPage() {
               </button>
             </div>
 
-            <div className="mt-3">
+            <div className="mt-3 rounded-xl border border-line bg-canvas p-3">
               <QrPreview tableId={table.id} label={`table ${table.tableNumber}`} />
             </div>
 
-            <p className="mt-2 break-all rounded-lg bg-gray-50 px-2 py-1 text-[11px] text-gray-500">
+            <p className="mt-2 break-all rounded-lg bg-canvas px-2 py-1.5 text-[10.5px] leading-relaxed text-muted">
               {table.menuUrl}
             </p>
 
@@ -271,6 +278,7 @@ export default function TablesPage() {
                 onClick={() => void download(table, "png")}
                 className={secondaryButton}
               >
+                <DownloadIcon size={14} />
                 Download PNG
               </button>
               <button
@@ -284,7 +292,7 @@ export default function TablesPage() {
               <button
                 type="button"
                 onClick={() => setDeleteTarget(table)}
-                className="rounded-lg px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
+                className="ms-auto rounded-xl px-2.5 py-2 text-[12.5px] font-medium text-muted transition hover:text-danger"
               >
                 Delete
               </button>

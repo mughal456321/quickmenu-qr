@@ -69,18 +69,31 @@ export default function RegisterPage() {
   return (
     <main className={authShellClass}>
       <div className="w-full max-w-lg">
-        <div className="mb-6 text-center">
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900">
+        <Link
+          href="/"
+          className="mb-6 flex items-center gap-2.5 text-ink"
+        >
+          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-ink text-[13px] font-semibold text-canvas">
+            Q
+          </span>
+          <span className="text-[15px] font-semibold tracking-tight">QuickMenu</span>
+        </Link>
+
+        <div className="mb-6">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
+            New restaurant
+          </p>
+          <h1 className="display mt-2 text-[32px] leading-none text-ink">
             Create your restaurant
           </h1>
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-2 text-[13px] leading-relaxed text-muted">
             You get a menu builder, table QR codes and a live kitchen board.
           </p>
         </div>
 
         <form
           onSubmit={(event) => void onSubmit(event)}
-          className={`space-y-4 ${cardClass}`}
+          className={`space-y-4 p-5 sm:p-6 ${cardClass}`}
         >
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
@@ -95,7 +108,7 @@ export default function RegisterPage() {
                 autoComplete="name"
               />
               {errors.name && (
-                <span className="mt-1 block text-xs text-red-600">{errors.name}</span>
+                <span className="mt-1 block text-xs text-danger">{errors.name}</span>
               )}
             </div>
 
@@ -111,7 +124,7 @@ export default function RegisterPage() {
                 autoComplete="organization"
               />
               {errors.restaurantName && (
-                <span className="mt-1 block text-xs text-red-600">
+                <span className="mt-1 block text-xs text-danger">
                   {errors.restaurantName}
                 </span>
               )}
@@ -131,7 +144,7 @@ export default function RegisterPage() {
               autoComplete="email"
             />
             {errors.email && (
-              <span className="mt-1 block text-xs text-red-600">{errors.email}</span>
+              <span className="mt-1 block text-xs text-danger">{errors.email}</span>
             )}
           </div>
 
@@ -147,11 +160,11 @@ export default function RegisterPage() {
               className={inputClass}
               autoComplete="new-password"
             />
-            <span className="mt-1 block text-xs text-gray-500">
+            <span className="mt-1 block text-xs text-muted">
               At least 8 characters, with a letter and a number.
             </span>
             {errors.password && (
-              <span className="mt-1 block text-xs text-red-600">{errors.password}</span>
+              <span className="mt-1 block text-xs text-danger">{errors.password}</span>
             )}
           </div>
 
@@ -180,24 +193,31 @@ export default function RegisterPage() {
                 className={inputClass}
               />
               {errors.currency && (
-                <span className="mt-1 block text-xs text-red-600">{errors.currency}</span>
+                <span className="mt-1 block text-xs text-danger">{errors.currency}</span>
               )}
             </label>
           </div>
 
           {error && (
-            <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">
+            <p
+              className="rounded-xl bg-danger-soft px-3 py-2.5 text-[12.5px] text-danger"
+              role="alert"
+            >
               {error}
             </p>
           )}
 
-          <button type="submit" disabled={busy} className={`w-full ${primaryButton}`}>
+          <button
+            type="submit"
+            disabled={busy}
+            className={`w-full ${primaryButton}`}
+          >
             {busy ? "Creating account…" : "Create account"}
           </button>
 
-          <p className="text-center text-sm text-gray-500">
+          <p className="text-center text-[12.5px] text-muted">
             Already have an account?{" "}
-            <Link href="/login" className="font-medium text-orange-600">
+            <Link href="/login" className="font-medium text-accent">
               Log in
             </Link>
           </p>

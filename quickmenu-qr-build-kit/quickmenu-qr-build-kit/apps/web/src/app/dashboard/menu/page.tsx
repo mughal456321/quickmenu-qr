@@ -7,11 +7,21 @@ import type {
 } from "@quickmenu/shared";
 import { ApiRequestError, apiEnvelope, apiRequest, apiVoid, formatPrice } from "../../../lib/api";
 import { useAuth } from "../../../lib/auth";
-import { optimizedImageUrl } from "../../../lib/images";
 import { useToast } from "../../../components/Toast";
 import { ConfirmDialog } from "../../../components/ConfirmDialog";
+import { DishImage } from "../../../components/DishImage";
+import {
+  ArrowDownIcon,
+  ArrowUpIcon,
+  PencilIcon,
+  PlusIcon,
+  SearchIcon,
+  TrashIcon,
+} from "../../../components/icons";
 import {
   cardClass,
+  eyebrowClass,
+  ghostButton,
   primaryButton,
   secondaryButton,
 } from "../../../components/ui";
@@ -305,8 +315,10 @@ export default function MenuBuilderPage() {
   if (categories === null) {
     return (
       <div className="mx-auto max-w-6xl">
-        <h1 className="text-2xl font-bold text-gray-900">Menu Builder</h1>
-        <p className="mt-4 text-gray-500" role="status">
+        <p className={eyebrowClass}>Menu</p>
+        <h1 className="display mt-1.5 text-[30px] leading-none text-ink">Menu Builder</h1>
+        <p className="mt-4 flex items-center gap-3 text-sm text-muted" role="status">
+          <span className="h-4 w-4 animate-spin rounded-full border-2 border-line border-t-ink" />
           Loading your menu…
         </p>
       </div>
@@ -317,10 +329,11 @@ export default function MenuBuilderPage() {
     <div className="mx-auto max-w-6xl space-y-5">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900">
+          <p className={eyebrowClass}>Menu</p>
+          <h1 className="display mt-1.5 text-[30px] leading-none text-ink">
             Menu Builder
           </h1>
-          <p className="text-sm text-gray-500">
+          <p className="mt-1.5 text-[13px] text-muted">
             Categories, items, prices, tags and availability.
           </p>
         </div>
@@ -330,20 +343,21 @@ export default function MenuBuilderPage() {
           disabled={!selectedId}
           className={primaryButton}
         >
+          <PlusIcon size={16} />
           Add item
         </button>
       </div>
 
       <div className="grid grid-cols-1 gap-4 min-[900px]:grid-cols-[300px_minmax(0,1fr)]">
         <section
-          className={`${cardClass} h-fit min-w-0`}
+          className={`${cardClass} h-fit min-w-0 p-4`}
           aria-labelledby="categories-heading"
         >
           <div className="flex items-center justify-between">
-            <h2 id="categories-heading" className="text-sm font-bold uppercase tracking-wide text-gray-500">
+            <h2 id="categories-heading" className={eyebrowClass}>
               Categories
             </h2>
-            <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">
+            <span className="rounded-full bg-canvas px-2 py-0.5 text-[11px] font-medium tabular text-ink2">
               {categories.length}
             </span>
           </div>
@@ -357,7 +371,7 @@ export default function MenuBuilderPage() {
               value={newCategory}
               onChange={(event) => setNewCategory(event.target.value)}
               placeholder="e.g. Desserts"
-              className="min-w-0 flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              className="min-w-0 flex-1 rounded-xl border border-line bg-canvas px-3 py-2.5 text-[13px] text-ink placeholder:text-muted/80 outline-none transition focus:border-line-strong focus:bg-surface"
             />
             <button type="submit" className={secondaryButton}>
               Add
@@ -366,17 +380,17 @@ export default function MenuBuilderPage() {
 
           <ul className="mt-3 space-y-1">
             {categories.length === 0 && (
-              <li className="rounded-lg bg-gray-50 px-3 py-6 text-center text-sm text-gray-500">
+              <li className="rounded-xl border border-dashed border-line px-3 py-7 text-center text-[12.5px] text-muted">
                 Start by adding a category.
               </li>
             )}
             {categories.map((category) => (
               <li
                 key={category.id}
-                className={`rounded-xl border p-2 ${
+                className={`rounded-xl border p-1.5 transition ${
                   selectedId === category.id
-                    ? "border-orange-300 bg-orange-50"
-                    : "border-transparent"
+                    ? "border-accent/25 bg-accent-soft"
+                    : "border-transparent hover:border-line"
                 }`}
               >
                 <div className="flex items-start gap-1">
@@ -395,15 +409,18 @@ export default function MenuBuilderPage() {
                         id={`rename-${category.id}`}
                         value={renameValue}
                         onChange={(event) => setRenameValue(event.target.value)}
-                        className="min-w-0 flex-1 rounded-lg border border-gray-300 px-2 py-1 text-sm"
+                        className="min-w-0 flex-1 rounded-lg border border-line bg-surface px-2 py-1.5 text-[13px] text-ink outline-none focus:border-line-strong"
                       />
-                      <button type="submit" className="px-2 text-xs font-semibold text-orange-700">
+                      <button
+                        type="submit"
+                        className="px-2 text-[12px] font-semibold text-accent"
+                      >
                         Save
                       </button>
                       <button
                         type="button"
                         onClick={() => setRenamingId(null)}
-                        className="px-2 text-xs text-gray-500"
+                        className="px-2 text-[12px] text-muted"
                       >
                         Cancel
                       </button>
@@ -416,12 +433,12 @@ export default function MenuBuilderPage() {
                         setPage(1);
                       }}
                       aria-pressed={selectedId === category.id}
-                      className="min-w-0 flex-1 rounded-lg px-2 py-1 text-left"
+                      className="min-w-0 flex-1 rounded-lg px-2 py-1.5 text-left"
                     >
-                      <span className="block truncate text-sm font-semibold text-gray-900">
+                      <span className="block truncate text-[13.5px] font-medium text-ink">
                         {category.name}
                       </span>
-                      <span className="text-xs text-gray-500">
+                      <span className="text-[11.5px] text-muted">
                         {category.itemCount} {category.itemCount === 1 ? "item" : "items"}
                         {category.isActive ? "" : " · hidden"}
                       </span>
@@ -429,34 +446,35 @@ export default function MenuBuilderPage() {
                   )}
                 </div>
 
-                <div className="mt-1 flex flex-wrap items-center gap-1">
+                <div className="mt-1 flex flex-wrap items-center gap-0.5">
                   <button
                     type="button"
                     onClick={() => void moveCategory(category.id, -1)}
-                    className="rounded px-1.5 py-0.5 text-xs text-gray-500 hover:bg-white"
+                    className="rounded-md p-1.5 text-muted transition hover:bg-surface hover:text-ink"
                     aria-label={`Move ${category.name} up`}
                   >
-                    ↑
+                    <ArrowUpIcon size={13} />
                   </button>
                   <button
                     type="button"
                     onClick={() => void moveCategory(category.id, 1)}
-                    className="rounded px-1.5 py-0.5 text-xs text-gray-500 hover:bg-white"
+                    className="rounded-md p-1.5 text-muted transition hover:bg-surface hover:text-ink"
                     aria-label={`Move ${category.name} down`}
                   >
-                    ↓
+                    <ArrowDownIcon size={13} />
                   </button>
                   <button
                     type="button"
                     onClick={() => void startRename(category)}
-                    className="rounded px-1.5 py-0.5 text-xs text-gray-600 hover:bg-white"
+                    className="flex items-center gap-1 rounded-md px-1.5 py-1 text-[11.5px] text-ink2 transition hover:bg-surface"
                   >
+                    <PencilIcon size={11} />
                     Rename
                   </button>
                   <button
                     type="button"
                     onClick={() => void toggleCategory(category)}
-                    className="rounded px-1.5 py-0.5 text-xs text-gray-600 hover:bg-white"
+                    className="rounded-md px-1.5 py-1 text-[11.5px] text-ink2 transition hover:bg-surface"
                   >
                     {category.isActive ? "Hide" : "Show"}
                   </button>
@@ -470,8 +488,9 @@ export default function MenuBuilderPage() {
                         itemCount: category.itemCount,
                       })
                     }
-                    className="rounded px-1.5 py-0.5 text-xs text-red-600 hover:bg-white"
+                    className="ms-auto flex items-center gap-1 rounded-md px-1.5 py-1 text-[11.5px] text-muted transition hover:bg-surface hover:text-danger"
                   >
+                    <TrashIcon size={11} />
                     Delete
                   </button>
                 </div>
@@ -480,90 +499,93 @@ export default function MenuBuilderPage() {
           </ul>
         </section>
 
-        <section className={`${cardClass} min-w-0`} aria-labelledby="items-heading">
-          <div className="flex flex-wrap items-center justify-between gap-2">
+        <section className={`${cardClass} min-w-0 p-4 sm:p-5`} aria-labelledby="items-heading">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h2 id="items-heading" className="text-lg font-bold text-gray-900">
+              <h2 id="items-heading" className="display text-[22px] leading-tight text-ink">
                 {debouncedSearch
                   ? `Search results for “${debouncedSearch}”`
                   : selectedCategory?.name ?? "Items"}
               </h2>
-              <p className="text-xs text-gray-500">
+              <p className="mt-0.5 text-[11.5px] text-muted">
                 {total} {total === 1 ? "item" : "items"}
                 {selectedCategory && !debouncedSearch
                   ? ` in ${selectedCategory.name}`
                   : ""}
               </p>
             </div>
-            <label className="text-sm">
+            <label className="relative block w-full sm:w-64">
               <span className="sr-only">Search items</span>
+              <SearchIcon
+                size={15}
+                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted"
+              />
               <input
                 type="search"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder="Search items…"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm sm:w-56"
+                className="w-full rounded-full border border-line bg-canvas py-2.5 pl-9 pr-3 text-[13px] text-ink placeholder:text-muted/80 outline-none transition focus:border-line-strong focus:bg-surface"
               />
             </label>
           </div>
 
           <div className="mt-4 overflow-x-auto">
-            <table className="w-full min-w-[640px] border-collapse text-sm">
+            <table className="w-full min-w-[640px] border-collapse text-[13px]">
               <thead>
-                <tr className="border-b border-gray-200 text-left text-xs uppercase tracking-wide text-gray-500">
-                  <th scope="col" className="py-2 pr-3">Photo</th>
-                  <th scope="col" className="py-2 pr-3">Item</th>
-                  <th scope="col" className="py-2 pr-3">Price</th>
-                  <th scope="col" className="py-2 pr-3">Tags</th>
-                  <th scope="col" className="py-2 pr-3">In stock</th>
-                  <th scope="col" className="py-2 text-right">Actions</th>
+                <tr className="border-b border-line text-left">
+                  <th scope="col" className="pb-2 pr-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">Photo</th>
+                  <th scope="col" className="pb-2 pr-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">Item</th>
+                  <th scope="col" className="pb-2 pr-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">Price</th>
+                  <th scope="col" className="pb-2 pr-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">Tags</th>
+                  <th scope="col" className="pb-2 pr-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">In stock</th>
+                  <th scope="col" className="pb-2 text-right text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {loadingItems && (
                   <tr>
-                    <td colSpan={6} className="py-8 text-center text-gray-500" role="status">
+                    <td colSpan={6} className="py-10 text-center text-muted" role="status">
                       Loading items…
                     </td>
                   </tr>
                 )}
                 {!loadingItems && items?.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="py-8 text-center text-gray-500">
+                    <td colSpan={6} className="py-10 text-center text-muted">
                       No items yet. Use “Add item” to create one.
                     </td>
                   </tr>
                 )}
                 {!loadingItems &&
                   items?.map((item) => (
-                    <tr key={item.id} className="border-b border-gray-100 align-top">
+                    <tr
+                      key={item.id}
+                      className="border-b border-line/70 align-top transition hover:bg-canvas/50"
+                    >
                       <td className="py-3 pr-3">
-                        <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-lg bg-orange-100 text-lg">
-                          {item.images[0] ? (
-                            <img
-                              src={optimizedImageUrl(item.images[0].url, 200)}
-                              alt={item.name}
-                              className="h-full w-full object-cover"
-                            />
-                          ) : (
-                            <span aria-hidden>🍽️</span>
-                          )}
-                        </div>
+                        <DishImage
+                          src={item.images[0]?.url}
+                          name={item.name}
+                          width={120}
+                          sizes="44px"
+                          className="h-11 w-11 rounded-lg"
+                        />
                       </td>
                       <td className="py-3 pr-3">
-                        <p className="font-semibold text-gray-900">{item.name}</p>
+                        <p className="font-medium text-ink">{item.name}</p>
                         {item.description && (
-                          <p className="line-clamp-1 text-xs text-gray-500">
+                          <p className="line-clamp-1 text-[11.5px] text-muted">
                             {item.description}
                           </p>
                         )}
                         {item.variants.length > 0 && (
-                          <p className="text-xs text-gray-500">
+                          <p className="text-[11.5px] text-muted">
                             {item.variants.map((variant) => variant.name).join(" · ")}
                           </p>
                         )}
                       </td>
-                      <td className="py-3 pr-3 text-gray-700">
+                      <td className="py-3 pr-3 tabular text-ink2">
                         {formatPrice(item.basePrice)}
                       </td>
                       <td className="py-3 pr-3">
@@ -571,7 +593,7 @@ export default function MenuBuilderPage() {
                           {item.dietaryTags.map((tag) => (
                             <span
                               key={tag}
-                              className="rounded-full bg-green-50 px-2 py-0.5 text-[11px] text-green-700"
+                              className="rounded-full bg-success-soft px-1.5 py-0.5 text-[10.5px] font-medium text-success"
                             >
                               {tag.replace("_", " ")}
                             </span>
@@ -579,7 +601,7 @@ export default function MenuBuilderPage() {
                           {item.allergens.map((allergen) => (
                             <span
                               key={allergen}
-                              className="rounded-full bg-amber-50 px-2 py-0.5 text-[11px] text-amber-700"
+                              className="rounded-full bg-warn-soft px-1.5 py-0.5 text-[10.5px] font-medium text-warn"
                             >
                               {allergen}
                             </span>
@@ -592,10 +614,10 @@ export default function MenuBuilderPage() {
                           role="switch"
                           aria-checked={item.isAvailable}
                           onClick={() => void toggleAvailability(item)}
-                          className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                          className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition ${
                             item.isAvailable
-                              ? "bg-green-100 text-green-800"
-                              : "bg-gray-200 text-gray-700"
+                              ? "bg-success-soft text-success hover:bg-success/10"
+                              : "bg-canvas text-muted ring-1 ring-line hover:text-ink2"
                           }`}
                         >
                           {item.isAvailable ? "In stock" : "Out of stock"}
@@ -605,7 +627,7 @@ export default function MenuBuilderPage() {
                         <button
                           type="button"
                           onClick={() => setDrawerItem(item)}
-                          className={secondaryButton}
+                          className={ghostButton}
                         >
                           Edit
                         </button>
@@ -616,8 +638,8 @@ export default function MenuBuilderPage() {
             </table>
           </div>
 
-          <div className="mt-3 flex items-center justify-between text-sm">
-            <span className="text-gray-500">
+          <div className="mt-4 flex items-center justify-between text-[12px]">
+            <span className="text-muted">
               Page {page} of {pageCount}
             </span>
             <div className="flex gap-2">
@@ -684,8 +706,8 @@ export default function MenuBuilderPage() {
       )}
 
       <div className="flex justify-end">
-        <span className="text-xs text-gray-400">
-          Tip: use ↑/↓ to reorder categories without a mouse.
+        <span className="text-[11.5px] text-muted">
+          Tip: use the arrow buttons to reorder categories without a mouse.
         </span>
       </div>
     </div>

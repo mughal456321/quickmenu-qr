@@ -9,6 +9,16 @@ import {
   getStaffToken,
   saveStaffToken,
 } from "../../../lib/storage";
+import {
+  cardClass,
+  eyebrowClass,
+  ghostButton,
+  inputClass,
+  labelClass,
+  primaryButton,
+  secondaryButton,
+} from "../../../components/ui";
+import { BellIcon, ChefHatIcon, ClockIcon } from "../../../components/icons";
 
 const NEXT_STATUSES: Record<OrderStatus, OrderStatus[]> = {
   new: ["preparing", "cancelled"],
@@ -27,11 +37,11 @@ const ACTION_LABELS: Record<OrderStatus, string> = {
 };
 
 const STATUS_STYLES: Record<OrderStatus, string> = {
-  new: "bg-blue-100 text-blue-700",
-  preparing: "bg-amber-100 text-amber-700",
-  ready: "bg-green-100 text-green-700",
-  served: "bg-gray-100 text-gray-600",
-  cancelled: "bg-red-100 text-red-700",
+  new: "bg-accent-soft text-accent",
+  preparing: "bg-[#FBF0DC] text-[#8A5A05]",
+  ready: "bg-success-soft text-success",
+  served: "bg-success-soft text-success",
+  cancelled: "bg-danger-soft text-danger",
 };
 
 export default function StaffOrdersPage() {
@@ -129,7 +139,7 @@ export default function StaffOrdersPage() {
 
   if (checking) {
     return (
-      <main className="flex min-h-screen items-center justify-center text-gray-500">
+      <main className="flex min-h-screen items-center justify-center bg-canvas text-[13px] text-muted">
         Loading…
       </main>
     );
@@ -137,46 +147,49 @@ export default function StaffOrdersPage() {
 
   if (!token) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-gray-50 p-6">
+      <main className="flex min-h-screen items-center justify-center bg-canvas p-4 sm:p-6">
         <form
           onSubmit={(event) => void login(event)}
-          className="w-full max-w-sm space-y-4 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm"
+          className={`w-full max-w-[380px] space-y-4 p-5 sm:p-6 ${cardClass}`}
         >
           <div>
-            <h1 className="text-xl font-bold text-gray-900">Staff orders</h1>
-            <p className="text-sm text-gray-500">
+            <h1 className="display text-[28px] leading-none text-ink">Staff orders</h1>
+            <p className="mt-2 text-[12.5px] leading-relaxed text-muted">
               Log in with an owner or kitchen account.
             </p>
           </div>
-          <label className="block text-sm">
-            <span className="font-medium text-gray-700">Email</span>
+          <label className={labelClass}>
+            Email
             <input
               type="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               required
-              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
+              className={inputClass}
             />
           </label>
-          <label className="block text-sm">
-            <span className="font-medium text-gray-700">Password</span>
+          <label className={labelClass}>
+            Password
             <input
               type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               required
-              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
+              className={inputClass}
             />
           </label>
           {loginError && (
-            <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">
+            <p
+              className="rounded-xl bg-danger-soft px-3 py-2.5 text-[12.5px] text-danger"
+              role="alert"
+            >
               {loginError}
             </p>
           )}
           <button
             type="submit"
             disabled={loggingIn}
-            className="w-full rounded-xl bg-orange-500 px-4 py-3 font-semibold text-white disabled:opacity-60"
+            className={`w-full ${primaryButton}`}
           >
             {loggingIn ? "Logging in…" : "Log in"}
           </button>
@@ -186,72 +199,90 @@ export default function StaffOrdersPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-50">
-      <header className="border-b border-gray-200 bg-white px-4 py-3">
-        <div className="mx-auto flex max-w-5xl items-center justify-between">
-          <div>
-            <h1 className="text-lg font-bold text-gray-900">Kitchen orders</h1>
-            <p className="text-xs text-gray-500">Active orders for your restaurant</p>
+    <main className="min-h-screen bg-canvas">
+      <header className="sticky top-0 z-10 border-b border-line bg-canvas/90 backdrop-blur">
+        <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-4 py-4">
+          <div className="flex items-center gap-3">
+            <span className="hidden h-9 w-9 items-center justify-center rounded-full bg-ink text-canvas sm:flex">
+              <ChefHatIcon size={17} />
+            </span>
+            <div>
+              <h1 className="display text-[26px] leading-none text-ink">
+                Kitchen orders
+              </h1>
+              <p className="mt-1 text-[11.5px] text-muted">
+                Active orders for your restaurant
+              </p>
+            </div>
           </div>
           <div className="flex gap-2">
             <button
               type="button"
               onClick={() => token && void loadOrders(token)}
-              className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium"
+              className={secondaryButton}
             >
               Refresh
             </button>
-            <button
-              type="button"
-              onClick={logout}
-              className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium"
-            >
+            <button type="button" onClick={logout} className={ghostButton}>
               Log out
             </button>
           </div>
         </div>
       </header>
 
-      <section className="mx-auto max-w-5xl space-y-3 p-4">
+      <section className="mx-auto max-w-5xl space-y-4 px-4 py-5 sm:py-6">
         {listError && (
-          <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">
+          <p
+            className="rounded-xl border border-danger/15 bg-danger-soft px-3.5 py-2.5 text-[12.5px] text-danger"
+            role="alert"
+          >
             {listError}
           </p>
         )}
 
         {orders && orders.length === 0 && (
-          <p className="rounded-xl bg-white px-4 py-10 text-center text-gray-500">
-            No active orders right now.
-          </p>
+          <div className="rounded-[18px] border border-dashed border-line-strong bg-surface px-5 py-14 text-center">
+            <span className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-canvas text-muted">
+              <BellIcon size={18} />
+            </span>
+            <p className="mt-3 text-[13px] text-muted">No active orders right now.</p>
+          </div>
         )}
 
-        <div className="grid gap-3 md:grid-cols-2">
+        <div className="grid gap-4 md:grid-cols-2">
           {orders?.map((order) => (
             <article
               key={order.id}
-              className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm"
+              className="animate-fade-in rounded-[18px] border border-line bg-surface p-4 transition hover:border-line-strong"
             >
-              <div className="flex items-start justify-between">
+              <div className="flex items-start justify-between gap-3">
                 <div>
-                  <h2 className="text-lg font-bold text-gray-900">
+                  <h2 className="display tabular text-[26px] leading-none text-ink">
                     #{order.orderNumber}
                   </h2>
-                  <p className="text-sm text-gray-500">Table {order.table.number}</p>
+                  <p className={`mt-1.5 ${eyebrowClass}`}>Table {order.table.number}</p>
                 </div>
                 <span
-                  className={`rounded-full px-3 py-1 text-xs font-semibold capitalize ${STATUS_STYLES[order.status]}`}
+                  className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold ${STATUS_STYLES[order.status]}`}
                 >
+                  <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-current" />
                   {order.status}
                 </span>
               </div>
 
-              <ul className="mt-3 space-y-1 text-sm">
+              <ul className="mt-3.5 space-y-1.5 border-t border-line pt-3">
                 {order.items.map((item, index) => (
-                  <li key={`${order.id}-${item.name}-${index}`} className="text-gray-700">
-                    <span className="font-semibold">{item.quantity} ×</span> {item.name}
+                  <li
+                    key={`${order.id}-${item.name}-${index}`}
+                    className="text-[13px] leading-snug text-ink2"
+                  >
+                    <span className="font-semibold tabular text-ink">
+                      {item.quantity} ×
+                    </span>{" "}
+                    {item.name}
                     {item.variant ? ` (${item.variant})` : ""}
                     {item.specialInstructions && (
-                      <span className="block text-xs italic text-gray-500">
+                      <span className="block text-[11.5px] italic text-muted">
                         “{item.specialInstructions}”
                       </span>
                     )}
@@ -260,13 +291,14 @@ export default function StaffOrdersPage() {
               </ul>
 
               {order.notes && (
-                <p className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                <p className="mt-3 rounded-xl border border-warn/15 bg-warn-soft px-3 py-2 text-[12.5px] text-warn">
                   Note: {order.notes}
                 </p>
               )}
 
-              <div className="mt-3 flex items-center justify-between">
-                <span className="text-xs text-gray-500">
+              <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                <span className="inline-flex items-center gap-1.5 text-[11.5px] tabular text-muted">
+                  <ClockIcon size={12} />
                   {order.items.reduce((total, item) => total + item.quantity, 0)} items ·{" "}
                   {formatPrice(
                     order.items.reduce(
@@ -282,8 +314,10 @@ export default function StaffOrdersPage() {
                       type="button"
                       disabled={pendingId === order.id}
                       onClick={() => void advance(order, status)}
-                      className={`rounded-lg px-3 py-2 text-sm font-semibold text-white disabled:opacity-60 ${
-                        status === "cancelled" ? "bg-red-600" : "bg-orange-500"
+                      className={`rounded-xl px-3.5 py-2 text-[12.5px] font-semibold transition disabled:opacity-50 ${
+                        status === "cancelled"
+                          ? "border border-danger/20 bg-danger-soft text-danger hover:border-danger/40"
+                          : "bg-ink text-canvas hover:bg-ink2"
                       }`}
                     >
                       {ACTION_LABELS[status]}

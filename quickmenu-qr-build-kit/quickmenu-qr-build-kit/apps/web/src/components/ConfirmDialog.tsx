@@ -39,25 +39,25 @@ export function ConfirmDialog({
   }, [onCancel]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+    <div className="fixed inset-0 z-50 flex animate-fade-in items-center justify-center bg-ink/45 p-4 backdrop-blur-[2px]">
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="confirm-title"
         aria-describedby="confirm-message"
-        className="w-full max-w-md rounded-2xl bg-white p-5 shadow-xl"
+        className="w-full max-w-[420px] animate-sheet-up rounded-[20px] border border-line bg-canvas p-5 shadow-lift"
       >
-        <h2 id="confirm-title" className="text-lg font-bold text-gray-900">
+        <h2 id="confirm-title" className="display text-[22px] leading-tight text-ink">
           {title}
         </h2>
-        <p id="confirm-message" className="mt-2 text-sm text-gray-600">
+        <p id="confirm-message" className="mt-2 text-[13.5px] leading-relaxed text-muted">
           {message}
         </p>
         <div className="mt-5 flex justify-end gap-2">
           <button
             type="button"
             onClick={onCancel}
-            className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700"
+            className="rounded-full border border-line bg-surface px-4 py-2.5 text-[13px] font-medium text-ink2 transition hover:border-line-strong"
           >
             {cancelLabel}
           </button>
@@ -66,8 +66,8 @@ export function ConfirmDialog({
             type="button"
             disabled={busy}
             onClick={onConfirm}
-            className={`rounded-lg px-4 py-2 text-sm font-semibold text-white disabled:opacity-60 ${
-              danger ? "bg-red-600" : "bg-orange-500"
+            className={`rounded-full px-4 py-2.5 text-[13px] font-semibold text-white transition disabled:opacity-60 ${
+              danger ? "bg-danger hover:bg-danger/90" : "bg-ink hover:bg-ink2"
             }`}
           >
             {busy ? "Working…" : confirmLabel}

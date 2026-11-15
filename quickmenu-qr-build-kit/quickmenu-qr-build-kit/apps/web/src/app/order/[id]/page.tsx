@@ -6,6 +6,8 @@ import type { OrderStatus, PublicOrderStatus } from "@quickmenu/shared";
 import { ApiRequestError, apiRequest, formatPrice } from "../../../lib/api";
 import { orderSocket } from "../../../lib/realtime";
 import { getMenuPath, getTrackingToken } from "../../../lib/storage";
+import { ArrowLeftIcon } from "../../../components/icons";
+import { primaryButton } from "../../../components/ui";
 
 const STEPS: Array<{ status: OrderStatus; label: string }> = [
   { status: "new", label: "Received" },
@@ -13,6 +15,14 @@ const STEPS: Array<{ status: OrderStatus; label: string }> = [
   { status: "ready", label: "Ready" },
   { status: "served", label: "Served" },
 ];
+
+const STATUS_CHIP: Record<OrderStatus, string> = {
+  new: "bg-accent-soft text-accent",
+  preparing: "bg-[#FBF0DC] text-[#8A5A05]",
+  ready: "bg-success-soft text-success",
+  served: "bg-success-soft text-success",
+  cancelled: "bg-danger-soft text-danger",
+};
 
 function stepIndex(status: OrderStatus): number {
   return STEPS.findIndex((step) => step.status === status);
@@ -119,13 +129,15 @@ export default function OrderStatusPage({ params }: { params: { id: string } }) 
 
   if (tokenMissing) {
     return (
-      <main className="customer-shell flex min-h-screen flex-col items-center justify-center gap-4 p-6 text-center">
-        <h1 className="text-xl font-semibold">Order tracking unavailable</h1>
-        <p className="text-gray-600">
+      <main className="customer-shell flex min-h-screen flex-col items-center justify-center gap-4 bg-canvas p-6 text-center">
+        <h1 className="display text-[26px] leading-tight text-ink">
+          Order tracking unavailable
+        </h1>
+        <p className="max-w-[36ch] text-[13px] leading-relaxed text-muted">
           This browser does not have the tracking token for the order. Open the order
           from the same tab where you placed it.
         </p>
-        <Link href="/" className="rounded-xl bg-orange-500 px-5 py-2 font-medium text-white">
+        <Link href="/" className={`${primaryButton} mt-1 px-5`}>
           Back to home
         </Link>
       </main>
@@ -134,8 +146,8 @@ export default function OrderStatusPage({ params }: { params: { id: string } }) 
 
   if (!order) {
     return (
-      <main className="customer-shell flex min-h-screen items-center justify-center p-6">
-        <p className="text-gray-500">{error ?? "Loading your order…"}</p>
+      <main className="customer-shell flex min-h-screen items-center justify-center bg-canvas p-6">
+        <p className="text-[13px] text-muted">{error ?? "Loading your order…"}</p>
       </main>
     );
   }
@@ -144,48 +156,85 @@ export default function OrderStatusPage({ params }: { params: { id: string } }) 
   const currentStep = stepIndex(order.status);
 
   return (
-    <main className="customer-shell min-h-screen bg-gray-50 pb-8">
-      <header className="border-b border-gray-200 bg-white px-4 py-4">
-        <p className="text-sm text-gray-500">Table {order.table.number}</p>
-        <div className="flex items-end justify-between gap-2">
-          <h1 className="text-2xl font-bold text-gray-900">
-            Order #{order.orderNumber}
-          </h1>
-          <span className="rounded-full bg-orange-100 px-3 py-1 text-sm font-medium capitalize text-orange-700">
+    <main className="customer-shell min-h-screen bg-canvas pb-10">
+      <header className="border-b border-line bg-surface px-5 pb-5 pt-6">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
+              Table {order.table.number}
+            </p>
+            <h1 className="display tabular mt-2 text-[30px] leading-none text-ink">
+              Order #{order.orderNumber}
+            </h1>
+          </div>
+          <span
+            className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold ${STATUS_CHIP[order.status]}`}
+          >
+            <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-current" />
             {order.status}
           </span>
         </div>
-        <p className="mt-1 text-xs text-gray-500" role="status">
+        <p
+          className="mt-4 flex items-center gap-2 text-[11.5px] text-muted"
+          role="status"
+        >
+          <span
+            aria-hidden
+            className={`h-1.5 w-1.5 rounded-full ${
+              connection === "live" ? "bg-success" : "bg-muted/60"
+            }`}
+          />
           {connection === "live"
             ? "Live updates from the kitchen"
             : "This page refreshes automatically every 5 seconds."}
         </p>
       </header>
 
-      <section className="px-4 py-5">
+      <section className="px-5 py-6">
         {cancelledOrder ? (
-          <p className="rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+          <p className="rounded-xl border border-danger/15 bg-danger-soft px-4 py-3 text-[12.5px] font-medium text-danger">
             This order was cancelled.
           </p>
         ) : (
-          <ol className="flex items-start justify-between gap-1">
+          <ol className="flex items-start justify-between">
             {STEPS.map((step, index) => {
               const done = index <= currentStep;
+              const active = index === currentStep;
               return (
                 <li
                   key={step.status}
-                  className="flex flex-1 flex-col items-center gap-1 text-center"
+                  className="relative flex flex-1 flex-col items-center gap-2 text-center"
                 >
+                  {index > 0 && (
+                    <span
+                      aria-hidden
+                      className={`absolute left-0 top-[15px] h-px w-1/2 ${
+                        done ? "bg-ink/20" : "bg-line"
+                      }`}
+                    />
+                  )}
+                  {index < STEPS.length - 1 && (
+                    <span
+                      aria-hidden
+                      className={`absolute right-0 top-[15px] h-px w-1/2 ${
+                        index < currentStep ? "bg-ink/20" : "bg-line"
+                      }`}
+                    />
+                  )}
                   <span
-                    className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold ${
-                      done ? "bg-orange-500 text-white" : "bg-gray-200 text-gray-500"
+                    className={`relative z-10 flex h-8 w-8 items-center justify-center rounded-full text-[12px] font-semibold tabular transition ${
+                      active
+                        ? "bg-accent text-canvas ring-4 ring-accent-soft"
+                        : done
+                          ? "bg-ink text-canvas"
+                          : "border border-line bg-surface text-muted"
                     }`}
                   >
                     {index + 1}
                   </span>
                   <span
-                    className={`text-[11px] ${
-                      done ? "font-semibold text-gray-900" : "text-gray-500"
+                    className={`text-[10px] font-semibold uppercase tracking-[0.12em] ${
+                      done ? "text-ink2" : "text-muted"
                     }`}
                   >
                     {step.label}
@@ -196,40 +245,53 @@ export default function OrderStatusPage({ params }: { params: { id: string } }) 
           </ol>
         )}
 
-        <div className="mt-5 space-y-2 rounded-2xl border border-gray-200 bg-white p-4">
-          {order.items.map((item, index) => (
-            <div
-              key={`${item.name}-${index}`}
-              className="flex items-start justify-between gap-3 border-b border-gray-100 py-2 last:border-0"
-            >
-              <div>
-                <p className="font-medium text-gray-900">
-                  {item.quantity} × {item.name}
-                </p>
-                {item.variant && <p className="text-xs text-gray-500">{item.variant}</p>}
-                {item.specialInstructions && (
-                  <p className="text-xs italic text-gray-500">
-                    “{item.specialInstructions}”
+        <div className="mt-6 overflow-hidden rounded-[18px] border border-line bg-surface">
+          <div className="divide-y divide-line px-4">
+            {order.items.map((item, index) => (
+              <div
+                key={`${item.name}-${index}`}
+                className="flex items-start justify-between gap-4 py-3.5"
+              >
+                <div className="min-w-0">
+                  <p className="text-[13px] font-medium leading-snug text-ink">
+                    {item.quantity} × {item.name}
                   </p>
-                )}
+                  {item.variant && (
+                    <p className="mt-0.5 text-[11.5px] text-muted">{item.variant}</p>
+                  )}
+                  {item.specialInstructions && (
+                    <p className="mt-0.5 text-[11.5px] italic text-muted">
+                      “{item.specialInstructions}”
+                    </p>
+                  )}
+                </div>
+                <p className="whitespace-nowrap text-[13px] tabular text-ink2">
+                  {formatPrice(item.unitPrice * item.quantity, order.currency)}
+                </p>
               </div>
-              <p className="whitespace-nowrap text-sm text-gray-700">
-                {formatPrice(item.unitPrice * item.quantity, order.currency)}
-              </p>
-            </div>
-          ))}
-          <div className="flex items-center justify-between pt-2 text-lg font-bold">
-            <span>Total</span>
-            <span>{formatPrice(order.total, order.currency)}</span>
+            ))}
+          </div>
+          <div className="flex items-center justify-between border-t border-line px-4 py-4">
+            <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">
+              Total
+            </span>
+            <span className="display tabular text-[24px] leading-none text-ink">
+              {formatPrice(order.total, order.currency)}
+            </span>
           </div>
         </div>
 
-        {error && <p className="mt-4 text-center text-sm text-amber-600">{error}</p>}
+        {error && (
+          <p className="mt-4 rounded-xl bg-warn-soft px-3.5 py-2.5 text-center text-[12px] leading-relaxed text-warn">
+            {error}
+          </p>
+        )}
 
         <Link
           href={menuPath}
-          className="mt-5 block rounded-xl border border-orange-200 bg-white px-4 py-3 text-center font-semibold text-orange-700"
+          className="mt-6 flex items-center justify-center gap-2 rounded-xl border border-line bg-surface px-4 py-3 text-[13px] font-semibold text-ink transition hover:border-line-strong hover:bg-canvas"
         >
+          <ArrowLeftIcon size={15} />
           Back to menu
         </Link>
       </section>

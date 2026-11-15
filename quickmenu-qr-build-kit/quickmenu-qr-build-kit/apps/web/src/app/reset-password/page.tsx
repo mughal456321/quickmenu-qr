@@ -8,10 +8,12 @@ import { ApiRequestError, apiVoid } from "../../lib/api";
 import {
   authShellClass,
   cardClass,
+  eyebrowClass,
   inputClass,
   labelClass,
   primaryButton,
 } from "../../components/ui";
+import { ArrowLeftIcon } from "../../components/icons";
 
 function ResetForm() {
   const searchParams = useSearchParams();
@@ -59,15 +61,21 @@ function ResetForm() {
 
   return (
     <main className={authShellClass}>
-      <div className="w-full max-w-md">
-        <form onSubmit={(event) => void onSubmit(event)} className={`space-y-4 ${cardClass}`}>
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">Choose a new password</h1>
-            <p className="mt-1 text-sm text-gray-500">
-              Reset links are single use and expire after 30 minutes.
-            </p>
-          </div>
+      <div className="w-full max-w-[400px]">
+        <div className="mb-6 text-center">
+          <p className={eyebrowClass}>QuickMenu QR</p>
+          <h1 className="display mt-2 text-[30px] leading-none text-ink">
+            Choose a new password
+          </h1>
+          <p className="mx-auto mt-2 max-w-[36ch] text-[13px] leading-relaxed text-muted">
+            Reset links are single use and expire after 30 minutes.
+          </p>
+        </div>
 
+        <form
+          onSubmit={(event) => void onSubmit(event)}
+          className={`space-y-4 p-5 sm:p-6 ${cardClass}`}
+        >
           <label className={labelClass}>
             Reset token
             <input
@@ -101,12 +109,18 @@ function ResetForm() {
           </label>
 
           {message && (
-            <p className="rounded-lg bg-green-50 px-3 py-2 text-sm text-green-800" role="status">
+            <p
+              className="rounded-xl bg-success-soft px-3 py-2.5 text-[12.5px] text-success"
+              role="status"
+            >
               {message}
             </p>
           )}
           {error && (
-            <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">
+            <p
+              className="rounded-xl bg-danger-soft px-3 py-2.5 text-[12.5px] text-danger"
+              role="alert"
+            >
               {error}
             </p>
           )}
@@ -115,8 +129,12 @@ function ResetForm() {
             {busy ? "Saving…" : "Set new password"}
           </button>
 
-          <p className="text-center text-sm text-gray-500">
-            <Link href="/login" className="font-medium text-orange-600">
+          <p className="text-center text-[12.5px] text-muted">
+            <Link
+              href="/login"
+              className="inline-flex items-center gap-1.5 font-medium text-ink2 underline underline-offset-4 transition hover:text-ink"
+            >
+              <ArrowLeftIcon size={14} />
               Back to login
             </Link>
           </p>
@@ -128,7 +146,13 @@ function ResetForm() {
 
 export default function ResetPasswordPage() {
   return (
-    <Suspense fallback={<main className={authShellClass}>Loading…</main>}>
+    <Suspense
+      fallback={
+        <main className={authShellClass}>
+          <p className="text-[13px] text-muted">Loading…</p>
+        </main>
+      }
+    >
       <ResetForm />
     </Suspense>
   );

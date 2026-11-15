@@ -1,19 +1,33 @@
-export const inputClass =
-  "mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200";
+/**
+ * Shared surface primitives. Everything routes through the tokens in
+ * tailwind.config.js so screens stay visually consistent.
+ */
 
-export const labelClass = "block text-sm font-medium text-gray-700";
+export const inputClass =
+  "mt-1 w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-[15px] text-ink placeholder:text-muted/70 outline-none transition focus:border-ink/30 focus:ring-4 focus:ring-ink/5";
+
+export const labelClass = "block text-[13px] font-medium text-ink2";
 
 export const primaryButton =
-  "rounded-xl bg-orange-500 px-4 py-3 font-semibold text-white hover:bg-orange-600 disabled:opacity-60";
+  "inline-flex items-center justify-center gap-2 rounded-xl bg-ink px-4 py-3 text-[15px] font-semibold text-canvas transition hover:bg-ink2 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ink/20 disabled:cursor-not-allowed disabled:opacity-50";
 
 export const secondaryButton =
-  "rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-60";
+  "inline-flex items-center justify-center gap-2 rounded-xl border border-line bg-surface px-3.5 py-2.5 text-[13px] font-medium text-ink transition hover:border-line-strong hover:bg-canvas focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ink/10 disabled:cursor-not-allowed disabled:opacity-50";
+
+export const ghostButton =
+  "inline-flex items-center justify-center gap-2 rounded-xl px-3 py-2 text-[13px] font-medium text-ink2 transition hover:bg-ink/[0.05] disabled:opacity-50";
 
 export const dangerButton =
-  "rounded-lg bg-red-600 px-3 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60";
+  "inline-flex items-center justify-center gap-2 rounded-xl bg-danger px-3.5 py-2.5 text-[13px] font-semibold text-white transition hover:bg-danger/90 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-danger/20 disabled:cursor-not-allowed disabled:opacity-50";
 
-export const cardClass =
-  "rounded-2xl border border-gray-200 bg-white p-5 shadow-sm";
+export const cardClass = "rounded-[18px] border border-line bg-surface";
 
 export const authShellClass =
-  "flex min-h-screen items-center justify-center bg-gray-50 p-4 sm:p-6";
+  "flex min-h-screen items-center justify-center bg-canvas p-4 sm:p-6";
+
+/** Small uppercase label used above sections and in cards. */
+export const eyebrowClass =
+  "text-[11px] font-semibold uppercase tracking-[0.14em] text-muted";
+
+/** 1px hairline divider that matches the warm palette. */
+export const dividerClass = "border-t border-line";

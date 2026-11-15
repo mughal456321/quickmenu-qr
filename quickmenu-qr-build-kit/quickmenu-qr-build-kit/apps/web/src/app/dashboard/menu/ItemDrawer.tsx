@@ -17,6 +17,7 @@ import { ApiRequestError, apiRequest, apiVoid } from "../../../lib/api";
 import { optimizedImageUrl } from "../../../lib/images";
 import { uploadImage } from "../../../lib/uploads";
 import { useToast } from "../../../components/Toast";
+import { CloseIcon, PlusIcon, TrashIcon } from "../../../components/icons";
 import {
   dangerButton,
   inputClass,
@@ -278,31 +279,36 @@ export function ItemDrawer({
   }
 
   return (
-    <div className="fixed inset-0 z-40 flex justify-end bg-black/40">
+    <div className="fixed inset-0 z-40 flex animate-fade-in justify-end bg-ink/40">
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="item-drawer-title"
-        className="flex h-full w-full flex-col bg-white shadow-xl min-[900px]:w-[520px]"
+        className="flex h-full w-full animate-sheet-up flex-col border-l border-line bg-canvas shadow-lift min-[900px]:w-[520px]"
       >
-        <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
-          <h2 id="item-drawer-title" className="text-lg font-bold text-gray-900">
-            {item ? "Edit item" : "New item"}
-          </h2>
+        <div className="flex items-center justify-between border-b border-line px-5 py-4">
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
+              Menu item
+            </p>
+            <h2 id="item-drawer-title" className="display mt-1 text-[22px] leading-none text-ink">
+              {item ? "Edit item" : "New item"}
+            </h2>
+          </div>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full px-3 text-gray-500"
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-line bg-surface text-ink2 transition hover:border-line-strong"
             aria-label="Close item editor"
           >
-            ✕
+            <CloseIcon size={16} />
           </button>
         </div>
 
         <form
           id="item-form"
           onSubmit={(event) => void save(event)}
-          className="flex-1 space-y-4 overflow-y-auto px-4 py-4"
+          className="flex-1 space-y-4 overflow-y-auto px-5 py-5"
         >
           <label className={labelClass}>
             Name
@@ -365,26 +371,33 @@ export function ItemDrawer({
             </label>
           </div>
 
-          <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+          <label className="flex items-center gap-2.5 rounded-xl border border-line bg-surface px-3.5 py-3 text-[13px] font-medium text-ink2">
             <input
               type="checkbox"
               checked={isAvailable}
               onChange={(event) => setIsAvailable(event.target.checked)}
-              className="h-4 w-4"
+              className="h-4 w-4 accent-[#151412]"
             />
             In stock
           </label>
 
           <fieldset>
-            <legend className="text-sm font-medium text-gray-700">Dietary labels</legend>
-            <div className="mt-1 flex flex-wrap gap-3">
+            <legend className={labelClass}>Dietary labels</legend>
+            <div className="mt-2 flex flex-wrap gap-2">
               {ALLOWED_DIETARY_TAGS.map((tag) => (
-                <label key={tag} className="flex items-center gap-2 text-sm text-gray-600">
+                <label
+                  key={tag}
+                  className={`flex cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1.5 text-[12px] capitalize transition ${
+                    dietaryTags.includes(tag)
+                      ? "border-ink bg-ink text-canvas"
+                      : "border-line bg-surface text-ink2 hover:border-line-strong"
+                  }`}
+                >
                   <input
                     type="checkbox"
                     checked={dietaryTags.includes(tag)}
                     onChange={() => setDietaryTags((current) => toggleTag(current, tag))}
-                    className="h-4 w-4"
+                    className="sr-only"
                   />
                   {tag.replace("_", " ")}
                 </label>
@@ -393,18 +406,22 @@ export function ItemDrawer({
           </fieldset>
 
           <fieldset>
-            <legend className="text-sm font-medium text-gray-700">Allergens</legend>
-            <div className="mt-1 flex flex-wrap gap-3">
+            <legend className={labelClass}>Allergens</legend>
+            <div className="mt-2 flex flex-wrap gap-2">
               {ALLOWED_ALLERGENS.map((allergen) => (
                 <label
                   key={allergen}
-                  className="flex items-center gap-2 text-sm text-gray-600"
+                  className={`flex cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1.5 text-[12px] transition ${
+                    allergens.includes(allergen)
+                      ? "border-accent bg-accent-soft text-accent"
+                      : "border-line bg-surface text-muted hover:border-line-strong hover:text-ink2"
+                  }`}
                 >
                   <input
                     type="checkbox"
                     checked={allergens.includes(allergen)}
                     onChange={() => setAllergens((current) => toggleTag(current, allergen))}
-                    className="h-4 w-4"
+                    className="sr-only"
                   />
                   {allergen}
                 </label>
@@ -412,23 +429,22 @@ export function ItemDrawer({
             </div>
           </fieldset>
 
-          <fieldset className="rounded-xl border border-gray-200 p-3">
-            <div className="flex items-center justify-between">
-              <legend className="text-sm font-medium text-gray-700">
-                Variants (max 10)
-              </legend>
+          <fieldset className="rounded-2xl border border-line bg-surface p-3.5">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <legend className={labelClass}>Variants (max 10)</legend>
               <button
                 type="button"
                 onClick={addVariant}
                 disabled={variants.length >= 10}
                 className={secondaryButton}
               >
+                <PlusIcon size={13} />
                 Add variant
               </button>
             </div>
-            <div className="mt-2 space-y-2">
+            <div className="mt-2.5 space-y-2">
               {variants.length === 0 && (
-                <p className="text-xs text-gray-500">
+                <p className="text-[12px] text-muted">
                   No variants: the base price is used.
                 </p>
               )}
@@ -440,7 +456,7 @@ export function ItemDrawer({
                       updateVariant(variant.key, { name: event.target.value })
                     }
                     placeholder="Name (e.g. Large)"
-                    className="min-w-0 flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                    className="min-w-0 flex-1 rounded-xl border border-line bg-canvas px-3 py-2 text-[13px] text-ink placeholder:text-muted/80 outline-none focus:border-line-strong"
                     aria-label="Variant name"
                   />
                   <input
@@ -452,53 +468,51 @@ export function ItemDrawer({
                       updateVariant(variant.key, { price: event.target.value })
                     }
                     placeholder="Price"
-                    className="w-24 rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                    className="w-24 rounded-xl border border-line bg-canvas px-3 py-2 text-[13px] tabular text-ink placeholder:text-muted/80 outline-none focus:border-line-strong"
                     aria-label="Variant price"
                   />
                   <button
                     type="button"
                     onClick={() => removeVariant(variant.key)}
-                    className="rounded-lg px-2 text-sm text-red-600"
+                    className="flex items-center justify-center rounded-xl px-2.5 text-muted transition hover:text-danger"
                     aria-label={`Remove variant ${variant.name || "row"}`}
                   >
-                    Remove
+                    <TrashIcon size={15} />
                   </button>
                 </div>
               ))}
             </div>
             {errors.variants && (
-              <p className="mt-1 text-xs text-red-600">{errors.variants}</p>
+              <p className="mt-1.5 text-[12px] text-danger">{errors.variants}</p>
             )}
           </fieldset>
 
-          <fieldset className="rounded-xl border border-gray-200 p-3">
-            <legend className="text-sm font-medium text-gray-700">
-              Photos (max 3)
-            </legend>
-            <p className="mt-1 text-xs text-gray-500">
+          <fieldset className="rounded-2xl border border-line bg-surface p-3.5">
+            <legend className={labelClass}>Photos (max 3)</legend>
+            <p className="mt-1 text-[11.5px] leading-relaxed text-muted">
               Uploaded directly to Cloudinary with a short-lived signature.
             </p>
-            <div className="mt-2 grid grid-cols-3 gap-2">
+            <div className="mt-2.5 grid grid-cols-3 gap-2">
               {images.map((image) => (
                 <div key={image.id} className="relative">
                   <img
                     src={optimizedImageUrl(image.url, 400)}
                     alt=""
-                    className="h-20 w-full rounded-lg object-cover"
+                    className="h-20 w-full rounded-xl object-cover"
                   />
                   <button
                     type="button"
                     onClick={() => void removeImage(image)}
-                    className="absolute right-1 top-1 rounded-full bg-black/70 px-2 text-xs text-white"
+                    className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-ink/70 text-canvas"
                     aria-label="Remove photo"
                   >
-                    ✕
+                    <CloseIcon size={11} />
                   </button>
                 </div>
               ))}
               {pendingFiles.map((file, index) => (
                 <div key={`${file.name}-${index}`} className="relative">
-                  <div className="flex h-20 items-center justify-center rounded-lg bg-orange-50 px-1 text-center text-[10px] text-orange-700">
+                  <div className="flex h-20 items-center justify-center rounded-xl bg-accent-soft px-1 text-center text-[10px] text-accent">
                     {file.name}
                   </div>
                   <button
@@ -508,15 +522,16 @@ export function ItemDrawer({
                         current.filter((_entry, entryIndex) => entryIndex !== index)
                       )
                     }
-                    className="absolute right-1 top-1 rounded-full bg-black/70 px-2 text-xs text-white"
+                    className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-ink/70 text-canvas"
                     aria-label={`Remove ${file.name}`}
                   >
-                    ✕
+                    <CloseIcon size={11} />
                   </button>
                 </div>
               ))}
               {remainingImageSlots > 0 && (
-                <label className="flex h-20 cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 text-center text-xs text-gray-500">
+                <label className="flex h-20 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-line-strong text-center text-[11px] text-muted transition hover:border-ink/40 hover:text-ink2">
+                  <PlusIcon size={15} />
                   <span>Add photo</span>
                   <input
                     type="file"
@@ -532,18 +547,21 @@ export function ItemDrawer({
               )}
             </div>
             {errors.images && (
-              <p className="mt-1 text-xs text-red-600">{errors.images}</p>
+              <p className="mt-1.5 text-[12px] text-danger">{errors.images}</p>
             )}
           </fieldset>
 
           {errors.form && (
-            <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">
+            <p
+              className="rounded-xl bg-danger-soft px-3 py-2.5 text-[12.5px] text-danger"
+              role="alert"
+            >
               {errors.form}
             </p>
           )}
         </form>
 
-        <div className="flex items-center justify-between gap-2 border-t border-gray-200 px-4 py-3">
+        <div className="flex items-center justify-between gap-2 border-t border-line bg-surface px-5 py-3.5">
           {item ? (
             <button
               type="button"

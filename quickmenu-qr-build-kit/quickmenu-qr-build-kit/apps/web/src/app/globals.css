@@ -3,12 +3,17 @@
 @tailwind utilities;
 
 :root {
-  --color-bg: #ffffff;
-  --color-text: #1f2937;
-  --color-primary: #f97316;
-  --color-primary-dark: #ea580c;
-  --color-muted: #6b7280;
-  --color-border: #e5e7eb;
+  --color-bg: #faf7f2;
+  --color-text: #151412;
+  --color-primary: #c2441d;
+  --color-primary-dark: #a33a17;
+  --color-muted: #8a8175;
+  --color-border: #e9e2d8;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
 }
 
 html[dir="rtl"] {
@@ -16,10 +21,16 @@ html[dir="rtl"] {
 }
 
 body {
-  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Urdu Nastaliq",
-    "Jameel Noori Nastaliq", "Arabic Typesetting", "Microsoft Arabic",
-    "Simsun", sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-feature-settings: "cv05" 1, "ss01" 1;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: #f6d9c9;
+  color: #151412;
 }
 
 /* Large touch targets (NFR-U5) */
@@ -34,4 +45,51 @@ a,
 .customer-shell {
   max-width: 480px;
   margin: 0 auto;
+  min-height: 100vh;
+  box-shadow: 0 0 0 1px var(--color-border);
+}
+
+@media (min-width: 520px) {
+  .customer-shell {
+    box-shadow: 0 30px 80px -60px rgba(21, 20, 18, 0.5);
+  }
+}
+
+/* Horizontal chip rails scroll without a visible bar. */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Numerals in prices line up in tables and totals. */
+.tabular {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+/* Sheet surfaces respect the phone's home indicator. */
+.safe-bottom {
+  padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
+}
+
+/* Display headings keep a little optical tightness. */
+.display {
+  font-family: var(--font-display), Georgia, Cambria, serif;
+  letter-spacing: -0.01em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
 }

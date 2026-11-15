@@ -4,13 +4,23 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAuth } from "../../lib/auth";
+import {
+  ChevronRightIcon,
+  GlobeIcon,
+  LogOutIcon,
+  QrIcon,
+  ReceiptIcon,
+  SettingsIcon,
+  UtensilsIcon,
+  UsersIcon,
+} from "../../components/icons";
 
 const NAV_ITEMS = [
-  { href: "/dashboard/menu", label: "Menu Builder", hint: "Categories and items" },
-  { href: "/dashboard/tables", label: "Tables & QR", hint: "Print table codes" },
-  { href: "/dashboard/orders", label: "Orders", hint: "Staff order board" },
-  { href: "/dashboard/staff", label: "Staff", hint: "Kitchen accounts" },
-  { href: "/dashboard/settings", label: "Settings", hint: "Restaurant profile" },
+  { href: "/dashboard/menu", label: "Menu Builder", hint: "Categories and items", icon: UtensilsIcon },
+  { href: "/dashboard/tables", label: "Tables & QR", hint: "Print table codes", icon: QrIcon },
+  { href: "/dashboard/orders", label: "Orders", hint: "Staff order board", icon: ReceiptIcon },
+  { href: "/dashboard/staff", label: "Staff", hint: "Kitchen accounts", icon: UsersIcon },
+  { href: "/dashboard/settings", label: "Settings", hint: "Restaurant profile", icon: SettingsIcon },
 ] as const;
 
 export default function DashboardLayout({
@@ -46,8 +56,11 @@ export default function DashboardLayout({
 
   if (status !== "authenticated" || !user || user.role !== "owner") {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-gray-50 text-gray-500">
-        <p role="status">Loading your dashboard…</p>
+      <main className="flex min-h-screen items-center justify-center bg-canvas">
+        <p className="flex items-center gap-3 text-sm text-muted" role="status">
+          <span className="h-4 w-4 animate-spin rounded-full border-2 border-line border-t-ink" />
+          Loading your dashboard…
+        </p>
       </main>
     );
   }
@@ -58,54 +71,68 @@ export default function DashboardLayout({
   }
 
   const sidebar = (
-    <div className="flex h-full flex-col">
-      <div className="border-b border-gray-200 px-5 py-5">
-        <p className="text-xs font-semibold uppercase tracking-wide text-orange-600">
+    <div className="flex h-full flex-col bg-surface">
+      <div className="border-b border-line px-5 py-5">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
           QuickMenu QR
         </p>
-        <p className="mt-1 text-lg font-bold text-gray-900">
+        <p className="display mt-1.5 truncate text-[21px] leading-tight text-ink">
           {restaurant?.name ?? "Owner dashboard"}
         </p>
-        <p className="truncate text-xs text-gray-500">{user.email}</p>
+        <p className="mt-0.5 truncate text-[11.5px] text-muted">{user.email}</p>
       </div>
 
-      <nav aria-label="Dashboard" className="flex-1 space-y-1 px-3 py-4">
+      <nav aria-label="Dashboard" className="flex-1 space-y-0.5 px-3 py-4">
         {NAV_ITEMS.map((item) => {
           const active =
             pathname === item.href ||
             (item.href === "/dashboard/menu" && pathname === "/dashboard");
+          const Icon = item.icon;
           return (
             <Link
               key={item.href}
               href={item.href}
               aria-current={active ? "page" : undefined}
-              className={`block rounded-xl px-3 py-2.5 text-sm ${
-                active
-                  ? "bg-orange-50 font-semibold text-orange-700"
-                  : "text-gray-700 hover:bg-gray-100"
+              className={`group flex items-start gap-3 rounded-xl px-3 py-2.5 transition ${
+                active ? "bg-ink text-canvas" : "text-ink2 hover:bg-ink/[0.04]"
               }`}
             >
-              <span className="block">{item.label}</span>
-              <span className="block text-xs font-normal text-gray-400">
-                {item.hint}
+              <Icon size={17} className={`mt-0.5 ${active ? "opacity-90" : "text-muted"}`} />
+              <span className="min-w-0 flex-1">
+                <span className="block text-[13.5px] font-medium leading-tight">
+                  {item.label}
+                </span>
+                <span
+                  className={`mt-0.5 block text-[11px] leading-tight ${
+                    active ? "text-canvas/60" : "text-muted"
+                  }`}
+                >
+                  {item.hint}
+                </span>
               </span>
+              <ChevronRightIcon
+                size={14}
+                className={`mt-1 ${active ? "opacity-50" : "text-line-strong"}`}
+              />
             </Link>
           );
         })}
       </nav>
 
-      <div className="space-y-2 border-t border-gray-200 p-4">
+      <div className="space-y-2 border-t border-line p-4">
         <Link
           href="/kitchen"
-          className="block rounded-lg border border-gray-300 px-3 py-2 text-center text-sm font-medium text-gray-700"
+          className="flex items-center justify-center gap-2 rounded-xl border border-line px-3 py-2.5 text-[12.5px] font-medium text-ink2 transition hover:border-line-strong"
         >
+          <GlobeIcon size={15} className="text-muted" />
           Open kitchen board
         </Link>
         <button
           type="button"
           onClick={() => void signOut()}
-          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700"
+          className="flex w-full items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-[12.5px] font-medium text-muted transition hover:bg-ink/[0.04] hover:text-ink"
         >
+          <LogOutIcon size={15} />
           Log out
         </button>
       </div>
@@ -113,18 +140,22 @@ export default function DashboardLayout({
   );
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="flex items-center justify-between border-b border-gray-200 bg-white px-4 py-3 min-[900px]:hidden">
-        <div>
-          <p className="text-sm font-bold text-gray-900">QuickMenu QR</p>
-          <p className="text-xs text-gray-500">{restaurant?.name}</p>
+    <div className="min-h-screen bg-canvas">
+      <header className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-line bg-canvas/95 px-4 py-3 backdrop-blur min-[900px]:hidden">
+        <div className="min-w-0">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
+            QuickMenu QR
+          </p>
+          <p className="display truncate text-[17px] leading-tight text-ink">
+            {restaurant?.name}
+          </p>
         </div>
         <button
           type="button"
           onClick={() => setMenuOpen((open) => !open)}
           aria-expanded={menuOpen}
           aria-controls="dashboard-sidebar"
-          className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium"
+          className="flex items-center gap-2 rounded-full border border-line bg-surface px-3.5 py-2 text-[12.5px] font-medium text-ink"
         >
           Menu
         </button>
@@ -133,13 +164,13 @@ export default function DashboardLayout({
       {menuOpen && (
         <div className="fixed inset-0 z-40 flex min-[900px]:hidden">
           <div
-            className="absolute inset-0 bg-black/40"
+            className="absolute inset-0 bg-ink/40 animate-fade-in"
             onClick={() => setMenuOpen(false)}
             aria-hidden
           />
           <aside
             id="dashboard-sidebar"
-            className="relative z-10 h-full w-72 max-w-[85%] bg-white shadow-xl"
+            className="relative z-10 h-full w-72 max-w-[85%] animate-sheet-up rounded-r-2xl bg-surface shadow-lift"
           >
             {sidebar}
           </aside>
@@ -149,11 +180,11 @@ export default function DashboardLayout({
       <div className="min-[900px]:flex">
         <aside
           id="dashboard-sidebar"
-          className="sticky top-0 hidden h-screen w-64 shrink-0 border-r border-gray-200 bg-white min-[900px]:block"
+          className="sticky top-0 hidden h-screen w-[248px] shrink-0 border-r border-line min-[900px]:block"
         >
           {sidebar}
         </aside>
-        <main className="min-w-0 flex-1 p-4 sm:p-6">{children}</main>
+        <main className="min-w-0 flex-1 px-4 py-5 sm:px-7 sm:py-7">{children}</main>
       </div>
     </div>
   );

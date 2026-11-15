@@ -8,6 +8,7 @@ import { useAuth } from "../../../lib/auth";
 import { useToast } from "../../../components/Toast";
 import {
   cardClass,
+  eyebrowClass,
   inputClass,
   labelClass,
   primaryButton,
@@ -136,14 +137,20 @@ export default function StaffPage() {
   return (
     <div className="mx-auto max-w-4xl space-y-5">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-gray-900">Staff</h1>
-        <p className="text-sm text-gray-500">
+        <p className={eyebrowClass}>Team</p>
+        <h1 className="display mt-1.5 text-[30px] leading-none text-ink">Staff</h1>
+        <p className="mt-1.5 text-[13px] text-muted">
           Kitchen accounts can open the kitchen board, but not the owner dashboard.
         </p>
       </div>
 
-      <form onSubmit={(event) => void createStaff(event)} className={`${cardClass} space-y-3`}>
-        <h2 className="text-lg font-bold text-gray-900">Create a kitchen account</h2>
+      <form
+        onSubmit={(event) => void createStaff(event)}
+        className={`${cardClass} space-y-3 p-4 sm:p-5`}
+      >
+        <h2 className="display text-[22px] leading-tight text-ink">
+          Create a kitchen account
+        </h2>
         <div className="grid gap-3 sm:grid-cols-3">
           <label className={labelClass}>
             Name
@@ -153,7 +160,7 @@ export default function StaffPage() {
               className={inputClass}
               autoComplete="off"
             />
-            {errors.name && <span className="text-xs text-red-600">{errors.name}</span>}
+            {errors.name && <span className="text-xs text-danger">{errors.name}</span>}
           </label>
           <label className={labelClass}>
             Email
@@ -164,7 +171,7 @@ export default function StaffPage() {
               className={inputClass}
               autoComplete="off"
             />
-            {errors.email && <span className="text-xs text-red-600">{errors.email}</span>}
+            {errors.email && <span className="text-xs text-danger">{errors.email}</span>}
           </label>
           <label className={labelClass}>
             Temporary password
@@ -176,7 +183,7 @@ export default function StaffPage() {
               autoComplete="new-password"
             />
             {errors.password && (
-              <span className="text-xs text-red-600">{errors.password}</span>
+              <span className="text-xs text-danger">{errors.password}</span>
             )}
           </label>
         </div>
@@ -185,38 +192,39 @@ export default function StaffPage() {
         </button>
       </form>
 
-      <section className={cardClass} aria-labelledby="staff-list-heading">
-        <h2 id="staff-list-heading" className="text-lg font-bold text-gray-900">
+      <section className={`${cardClass} p-4 sm:p-5`} aria-labelledby="staff-list-heading">
+        <h2 id="staff-list-heading" className="display text-[22px] leading-tight text-ink">
           Kitchen accounts
         </h2>
 
         {staff === null && (
-          <p className="mt-3 text-gray-500" role="status">
+          <p className="mt-3 flex items-center gap-3 text-[13px] text-muted" role="status">
+            <span className="h-4 w-4 animate-spin rounded-full border-2 border-line border-t-ink" />
             Loading staff…
           </p>
         )}
         {staff?.length === 0 && (
-          <p className="mt-3 text-gray-500">No kitchen accounts yet.</p>
+          <p className="mt-3 text-[13px] text-muted">No kitchen accounts yet.</p>
         )}
 
-        <ul className="mt-3 divide-y divide-gray-100">
+        <ul className="mt-3 divide-y divide-line">
           {staff?.map((user) => (
-            <li key={user.id} className="py-3">
+            <li key={user.id} className="py-3.5">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
-                  <p className="font-semibold text-gray-900">{user.name}</p>
-                  <p className="text-sm text-gray-500">{user.email}</p>
+                  <p className="text-[14px] font-medium text-ink">{user.name}</p>
+                  <p className="text-[12.5px] text-muted">{user.email}</p>
                   <span
-                    className={`mt-1 inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${
+                    className={`mt-1.5 inline-block rounded-full px-2 py-0.5 text-[10.5px] font-semibold uppercase tracking-[0.08em] ${
                       user.isActive
-                        ? "bg-green-100 text-green-800"
-                        : "bg-gray-200 text-gray-700"
+                        ? "bg-success-soft text-success"
+                        : "bg-canvas text-muted ring-1 ring-line"
                     }`}
                   >
                     {user.isActive ? "Active" : "Deactivated"}
                   </span>
                   {user.lockedUntil && (
-                    <span className="ml-2 text-xs text-red-600">
+                    <span className="ml-2 text-[11.5px] text-danger">
                       Locked until {new Date(user.lockedUntil).toLocaleTimeString()}
                     </span>
                   )}
@@ -244,7 +252,7 @@ export default function StaffPage() {
               </div>
 
               {resetId === user.id && (
-                <div className="mt-2 flex flex-wrap items-end gap-2 rounded-lg bg-gray-50 p-3">
+                <div className="mt-2.5 flex flex-wrap items-end gap-2 rounded-xl border border-line bg-canvas p-3">
                   <label className={`${labelClass} min-w-[220px] flex-1`}>
                     New password for {user.name}
                     <input

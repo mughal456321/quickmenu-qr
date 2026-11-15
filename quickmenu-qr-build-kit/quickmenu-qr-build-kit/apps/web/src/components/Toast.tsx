@@ -24,9 +24,9 @@ interface ToastContextValue {
 const ToastContext = createContext<ToastContextValue | null>(null);
 
 const TONE_CLASSES: Record<ToastTone, string> = {
-  success: "border-green-200 bg-green-50 text-green-800",
-  error: "border-red-200 bg-red-50 text-red-800",
-  info: "border-gray-200 bg-white text-gray-800",
+  success: "border-success/20 bg-success-soft text-success",
+  error: "border-danger/20 bg-danger-soft text-danger",
+  info: "border-line bg-surface text-ink",
 };
 
 /** Lightweight toast notifications with a live region for screen readers. */
@@ -55,7 +55,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
           <div
             key={toast.id}
             role={toast.tone === "error" ? "alert" : "status"}
-            className={`pointer-events-auto rounded-xl border px-4 py-3 text-sm shadow-lg ${TONE_CLASSES[toast.tone]}`}
+            className={`pointer-events-auto animate-sheet-up rounded-xl border px-4 py-3 text-[13px] font-medium shadow-lift ${TONE_CLASSES[toast.tone]}`}
           >
             {toast.message}
           </div>
