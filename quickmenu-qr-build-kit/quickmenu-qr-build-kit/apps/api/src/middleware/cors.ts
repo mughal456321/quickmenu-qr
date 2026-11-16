@@ -1,23 +1,19 @@
 import { Request, Response, NextFunction } from "express";
-import { env } from "../config";
-
-const ALLOWED_ORIGINS = new Set(
-  env.FRONTEND_ORIGIN.split(",").map((s) => s.trim())
-);
+import { isAllowedOrigin } from "../lib/origins";
 
 export function corsMiddleware(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): void {
   const origin = req.headers.origin;
-  if (origin && ALLOWED_ORIGINS.has(origin)) {
+  if (origin && isAllowedOrigin(origin)) {
     res.set("Access-Control-Allow-Origin", origin);
   }
   res.set("Access-Control-Allow-Methods", "GET,POST,PATCH,PUT,DELETE,OPTIONS");
   res.set(
     "Access-Control-Allow-Headers",
-    "Content-Type,Authorization,Idempotency-Key,X-Tracking-Token"
+    "Content-Type,Authorization,Idempotency-Key,X-Tracking-Token",
   );
   res.set("Access-Control-Allow-Credentials", "true");
   if (req.method === "OPTIONS") {

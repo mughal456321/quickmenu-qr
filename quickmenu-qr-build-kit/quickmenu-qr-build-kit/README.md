@@ -188,6 +188,25 @@ cannot resolve `localhost`: that is the phone itself.
 5. Keep the phone on the same network and open `http://<lan-ip>:3000/m/<token>`
    to test without scanning.
 
+## When a dev port is already in use
+
+`npm run dev` starts two processes: the API on `:4000` and Next on `:3000`. If a
+port is taken (usually by an earlier run that never exited), Next prints
+`Port 3000 is in use, trying 3001 instead` and the API dies with
+`EADDRINUSE :::4000` — then the browser shows a login failure because there is no
+API to talk to. Stop the stray processes and start one copy:
+
+```powershell
+Get-CimInstance Win32_Process -Filter "Name='node.exe'" |
+  Where-Object { $_.CommandLine -match 'QuickMenuQR' } |
+  ForEach-Object { Stop-Process -Id $_.ProcessId -Force }
+```
+
+In development the API also accepts any `http://localhost:<port>` origin, so a
+Next fallback to `:3001` still logs in; production keeps the strict
+`FRONTEND_ORIGIN` allow-list. Run only one `npm run dev` and one
+`npm run db:local` at a time.
+
 ## Deployment
 
 - **API:** Render web service from `render.yaml` in the repository root. Build

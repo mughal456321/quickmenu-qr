@@ -124,6 +124,12 @@ Record every choice that the documents leave open, and every deviation from them
 | D-79 | The default Tailwind utility palette and demo tiles made the product look like a scaffold, and the objective is a convincing ordering app. | A warm editorial system: cream canvas, ink text, persimmon accent, hairline borders, Instrument Serif display + Inter body, tabular numerals, a dark kitchen canvas, and shared primitives in components/ui.ts. | One vocabulary for every screen (customer, kitchen, dashboard, auth); the type pairing and restrained accent read as a designed restaurant product rather than a generated template. |
 | D-80 | The seed pointed at fictitious Cloudinary URLs, so a fresh local install showed empty menu tiles; AI image generation was unavailable in this environment. | Twelve openly licensed Wikimedia Commons photos ship in apps/web/public/demo/, square-cropped to 1000x1000 and credited in ATTRIBUTION.md; the seed stores /demo/<slug>.jpg and scripts/fetch-demo-images.mjs can reproduce them. | Real food photography makes the menu credible offline and keeps licensing explicit; Cloudinary stays the production media host, so no production behaviour changes. |
 
+### 2026-11-15 - Development origin handling
+
+| # | Problem | Decision | Reason |
+|---|---|---|---|
+| D-82 | `next dev` silently moves to the next free port when 3000 is taken. The API only echoed `Access-Control-Allow-Origin` for the exact strings in `FRONTEND_ORIGIN`, so the app served on `:3001` failed every request with an opaque CORS error that reads as "server not found" mid-demo. | One predicate, `isAllowedOrigin` in `apps/api/src/lib/origins.ts`, used by both the CORS middleware and Socket.IO: the configured list plus any `http://localhost:<port>` / `http://127.0.0.1:<port>` when `NODE_ENV` is not `production`. Production keeps the strict allow-list only. | Removes a failure mode that only exists on developer machines without weakening the deployed security posture; the rule now lives in one tested place instead of two string splits. |
+
 ### 2026-11-15 - Local dev database without Docker
 
 | # | Problem | Decision | Reason |

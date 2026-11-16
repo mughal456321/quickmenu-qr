@@ -2,10 +2,10 @@ import type { Server as HttpServer } from "http";
 import { Server } from "socket.io";
 import { orderStatusUpdateSchema } from "@quickmenu/shared";
 import type { KitchenOrder, OrderStatus } from "@quickmenu/shared";
-import { env } from "../config";
 import { verifyTokenHash } from "../domain/tracking";
 import { setOrderEvents, type OrderEvents } from "../events/orderEvents";
 import { onMenuChanged } from "../lib/menuEvents";
+import { isAllowedOrigin } from "../lib/origins";
 import { verifyAccessToken } from "../lib/tokens";
 import { logger } from "../logger";
 import * as ordersRepo from "../repositories/orders";
@@ -62,7 +62,9 @@ export function attachRealtime(httpServer: HttpServer): Server {
     pingInterval: 5_000,
     pingTimeout: 5_000,
     cors: {
-      origin: env.FRONTEND_ORIGIN.split(",").map((origin) => origin.trim()),
+      origin: (origin, callback) => {
+        callback(null, isAllowedOrigin(origin));
+      },
       credentials: true,
     },
   });
