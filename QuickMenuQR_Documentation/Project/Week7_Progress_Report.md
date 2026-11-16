@@ -12,7 +12,7 @@
 **End-to-end smoke test**
 - Prepared and executed a 16-step smoke test of the complete user journey: owner registration and login, menu and table setup, QR code, customer menu from the QR link, cart, order placement, staff handling of the order, status updates, and the customer's status page
 - Verified the protective behaviors in the same run: wrong-password handling, out-of-stock items blocked, a double tap creating only one order, invalid input rejected with clear messages, and the saved order rows checked directly in the database
-- Result: **16 of 16 steps passed** on build `75c10c4` (16 November 2026). The run log is committed at `docs/week7/smoke-test-run.log`
+- Result: **16 of 16 steps passed** on build `75c10c4` (16 November 2026). The run log is committed at `docs/week7/smoke-test-run.txt`
 - Fixed **3 defects** found while preparing the demonstration:
   1. Scanning the table QR from a phone showed "localhost refused to connect" because the link encoded the laptop's `localhost`; QR links now use the machine's LAN address and the API accepts it as an origin (`53b2319`)
   2. The development database was killed along with Docker on the 8 GB laptop, taking the API down mid-demo; added `npm run db:local`, which runs PostgreSQL 18 from `node_modules` on the same port with the same credentials (`bbae219`)
@@ -30,7 +30,7 @@
 - Demonstration to the faculty supervisor: [[FILL: date and time, and a one-line outcome or the feedback received]]
 
 ### 2. Verified Deliverables
-- Smoke test: **16 of 16** steps passed on build `75c10c4`; evidence: `docs/week7/smoke-test-run.log` plus screenshots `docs/week6/01-menu.png`, `02-cart.png`, `03-order-status.png`, `04-staff-orders.png`, `05-customer-preparing.png`
+- Smoke test: **16 of 16** steps passed on build `75c10c4`; evidence: `docs/week7/smoke-test-run.txt` plus screenshots `docs/week6/01-menu.png`, `02-cart.png`, `03-order-status.png`, `04-staff-orders.png`, `05-customer-preparing.png`
 - Automated tests: **213** passing (188 API, 4 shared contracts, 21 web); backend business-logic coverage **95.3%** of statements and lines (86.0% of branches), target 70% or higher; order engine coverage **100%**, target 90%
 - CI pipeline: passing — lint, typecheck, coverage, both builds and Playwright in GitHub Actions: [run 43871564383](https://github.com/mughal456321/quickmenu-qr/actions/runs/43871564383)
 - Prototype status: the main customer journey (scan, browse, order, track) and the staff order handling work end to end; features still to come are listed in the plan below
