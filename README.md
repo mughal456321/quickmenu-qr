@@ -118,6 +118,27 @@ runs one SQL statement against the same `DATABASE_URL` the API uses and prints t
 
 Both read `apps/api/.env`, so they connect to the same database as the API. They fail with a clear message if `npm run db:local` (or Docker) is not running. A GUI client (HeidiSQL, Beekeeper, DBeaver) also works with host `localhost`, port `5432`, database `quickmenu`, user/password `quickmenu`/`quickmenu`.
 
+#### View the data in VS Code
+
+`.vscode/extensions.json` recommends **SQLTools** (`mtxr.sqltools`) and its
+**PostgreSQL driver** (`mtxr.sqltools-driver-pg`), both free. VS Code offers to
+install them when the folder is opened, or install them from the Extensions
+panel. Note that a SQLite extension cannot open this data: PostgreSQL is a
+server, not a single file.
+
+Then, with `npm run db:local` running:
+
+1. Open the SQLTools icon in the sidebar, then **Add New Connection** → PostgreSQL.
+2. Enter `localhost`, port `5432`, database `quickmenu`, user `quickmenu`,
+   password `quickmenu`, SSL off.
+3. Save and connect, then expand `quickmenu → public → tables` and click a table
+   to see its rows.
+
+The password lives only in the extension's local storage — do not commit a
+connection profile to `.vscode/settings.json`. This is a read-only view by
+choice: editing `orders` or `order_status_history` by hand bypasses the status
+machine and the price snapshots the API enforces.
+
 Local Playwright can use an installed browser instead of the bundled one:
 `PLAYWRIGHT_CHANNEL=msedge npm run test:e2e` (PowerShell:
 `$env:PLAYWRIGHT_CHANNEL='msedge'; npm run test:e2e`).
