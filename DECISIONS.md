@@ -136,4 +136,11 @@ Record every choice that the documents leave open, and every deviation from them
 |---|---|---|---|
 | D-81 | Docker Desktop reserves several gigabytes, and on a 8 GB laptop it was killed during dev, taking PostgreSQL and the running servers with it; the phone could not reach the menu. | Add an optional `npm run db:local` script (scripts/dev-db.mjs) that runs PostgreSQL 18 from node_modules via embedded-postgres, on localhost:5432 with the same quickmenu credentials and a persisted .pgdata directory. Docker Compose stays the documented default; CI is unchanged. | The dev database now costs about 60 MB instead of a multi-gigabyte VM, so it survives alongside Next.js and the API; a fresh clone still uses `docker compose up -d` with no extra steps. |
 
+### 2026-11-16 - Repository flattened to the git root
+
+| # | Problem | Decision | Reason |
+|---|---|---|---|
+| D-83 | The project lived two folders deep (`quickmenu-qr-build-kit/quickmenu-qr-build-kit`), so every command, the CI job and the Render blueprint carried the nesting while `.github`, `render.yaml` and `.gitignore` sat outside the code they describe. A 1.79 MB zip of the repository was tracked inside the repository, an empty duplicate `.github/` existed, and `prompts/` sat at the top level next to real source code. | Flatten everything to the repository root in one commit. Keep `apps/web` (frontend), `apps/api` (backend), `packages/shared` and `db/`. Move `prompts/` to `docs/history/prompts/`, `load/` to `loadtest/`, merge project deliverables into `docs/deliverables/` (byte-identical duplicate PNGs dropped, zip removed), drop the nested `.github/`, and set `rootDir: .` in `render.yaml` plus no `working-directory` in CI. | One root for code, CI and deployment removes a permanent source of path errors; history is preserved with `git mv`, and the previous layout stays recoverable from branch `backup/pre-flatten`. No application code or behaviour changes. |
+
+
 

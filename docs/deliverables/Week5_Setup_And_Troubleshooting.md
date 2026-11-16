@@ -5,10 +5,10 @@ Current verified state: Phase 01, Phase 02, and Phase 03 are complete. The local
 Run all commands from:
 
 ```powershell
-cd C:\Users\User\Desktop\QuickMenuQR\quickmenu-qr-build-kit\quickmenu-qr-build-kit
+cd C:\Users\User\Desktop\QuickMenuQR
 ```
 
-The repository is nested inside `quickmenu-qr-build-kit\quickmenu-qr-build-kit`. Running Git in `C:\Users\User\Desktop\QuickMenuQR` fails with "not a git repository".
+The repository root is `C:\Users\User\Desktop\QuickMenuQR` (the project was flattened there in Week 7; earlier it was nested inside `quickmenu-qr-build-kit\quickmenu-qr-build-kit`).
 
 ## 1. Create the GitHub repository
 
@@ -118,7 +118,7 @@ Expected:
 
 | Error you see | Cause | Fix |
 |---|---|---|
-| `fatal: not a git repository` | You are in the parent folder | `cd quickmenu-qr-build-kit\quickmenu-qr-build-kit` |
+| `fatal: not a git repository` | You are in the parent folder | `cd C:\Users\User\Desktop\QuickMenuQR` |
 | `docker: error during connect ... daemon is not running` | Docker Desktop is not started | `Start-Process "C:\Users\User\AppData\Local\Programs\DockerDesktop\Docker Desktop.exe"` then wait for `docker info` to succeed |
 | `connect ECONNREFUSED ::1:5432` or `127.0.0.1:5432` | PostgreSQL is not running | `docker compose up -d`; `docker compose ps` |
 | `port is already allocated` on 5432 | A native PostgreSQL service is running | `Stop-Service postgresql*`; or change the Compose port to `5433:5432` and update `DATABASE_URL` |

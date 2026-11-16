@@ -14,7 +14,7 @@ phone. Orders appear instantly on a kitchen screen.
 ## Repository layout
 
 ```
-quickmenu-qr-build-kit/quickmenu-qr-build-kit/
+QuickMenuQR/
 ├── apps/
 │   ├── api/                       # Express + TypeScript + Socket.IO
 │   │   ├── src/server.ts          # app, security middleware, graceful shutdown
@@ -39,7 +39,7 @@ quickmenu-qr-build-kit/quickmenu-qr-build-kit/
 ├── db/migrations/001_init.sql     # approved schema (12 tables + trigger)
 ├── docs/                          # SRS, architecture, API contract, runbook
 ├── e2e/                           # Playwright flows
-├── load/                          # local and k6 load probes
+├── loadtest/                      # local and k6 load probes
 └── render.yaml (repo root)        # Render blueprint for the API
 ```
 
@@ -215,7 +215,7 @@ Next fallback to `:3001` still logs in; production keeps the strict
   `/api/v1/health`. Staging auto-deploys from `main`; production is promoted
   manually.
 - **Web:** Vercel project with root directory
-  `quickmenu-qr-build-kit/quickmenu-qr-build-kit/apps/web` and
+  `apps/web` and
   `NEXT_PUBLIC_API_URL=https://api.<domain>/api/v1`.
 - **Database:** managed PostgreSQL in the same region, daily backups.
 - Set every variable in `.env.example`; never commit secrets.
@@ -227,8 +227,8 @@ Next fallback to `:3001` still logs in; production keeps the strict
 - `GET /api/v1/health` returns `{ "data": { "status": "ok", "db": "up" } }`.
 - Migrations create all 12 tables, indexes, and the `trg_limit_item_images`
   trigger; `npm run db:reset && npm run db:seed` is repeatable.
-- API: 184 tests covering FR-01..FR-35, NFR-S2..S8, NFR-R4/R5, with coverage
-  above 95% statements (services above 94%).
+- API: 213 tests (188 API, 4 shared, 21 web) covering FR-01..FR-35, NFR-S2..S8,
+  NFR-R4/R5, with coverage above 95% statements (services above 94%).
 - Web: 21 unit tests for the cart, filters, kitchen board and image delivery.
 - Playwright: customer order flow, owner menu/table/QR flow, kitchen real-time
   and offline recovery.
@@ -237,10 +237,10 @@ Next fallback to `:3001` still logs in; production keeps the strict
 - Security: headers, safe errors, tenant-isolation matrix and 429 rate limiting
   (`apps/api/src/routes/security.test.ts`).
 - `npm run lint`, `npm run typecheck`, `npm test` and `npm run build` pass.
-- CI: `.github/workflows/ci.yml` at the repository root; the app lives in
-  `quickmenu-qr-build-kit/quickmenu-qr-build-kit`.
+- CI: `.github/workflows/ci.yml` at the repository root; the application lives
+  at the root too, so no nested working directory is needed.
 
 ## Phases
 
-See `prompts/00_MASTER_PROMPT.md`; each phase is a separate prompt in
-`prompts/01_*.md` … `prompts/10_*.md`.
+See `docs/history/prompts/00_MASTER_PROMPT.md`; each phase is a separate prompt in
+`docs/history/prompts/01_*.md` … `docs/history/prompts/10_*.md`.

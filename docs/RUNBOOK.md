@@ -8,7 +8,7 @@ after every incident.
 
 | Component | Host | Notes |
 |---|---|---|
-| Web (Next.js) | Vercel, project root `quickmenu-qr-build-kit/quickmenu-qr-build-kit/apps/web` | Environment `NEXT_PUBLIC_API_URL` |
+| Web (Next.js) | Vercel, project root `apps/web` | Environment `NEXT_PUBLIC_API_URL` |
 | API (Express + Socket.IO) | Render web service from `render.yaml` | Health check `/api/v1/health`, WebSocket path `/ws` |
 | Database | Render managed PostgreSQL, same region as the API | Daily backups |
 | Media | Cloudinary (signed uploads) | Folder `quickmenu/{restaurantId}` |
@@ -61,7 +61,7 @@ the secrets.
    first successful health check. Generate secrets with
    `node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"`.
 4. **Web.** In Vercel, import the repository, set **Root Directory** to
-   `quickmenu-qr-build-kit/quickmenu-qr-build-kit/apps/web`, framework Next.js,
+   `apps/web`, framework Next.js,
    and add `NEXT_PUBLIC_API_URL`. Deploy.
 5. **CORS.** Set `FRONTEND_ORIGIN` to the Vercel production and preview domains
    (comma-separated) and redeploy the API.

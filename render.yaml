@@ -1,11 +1,10 @@
-# Render blueprint — QuickMenu QR API
+# Render blueprint - QuickMenu QR API
 #
-# The application lives in a nested folder inside this repository, so rootDir
-# points at the monorepo root and commands use workspace scripts. The web app is
-# deployed separately on Vercel (root directory:
-# quickmenu-qr-build-kit/quickmenu-qr-build-kit/apps/web).
+# The API is built from the monorepo root, so rootDir is the repository root
+# and commands use workspace scripts. The web app is deployed separately on
+# Vercel (root directory: apps/web).
 #
-# Apply with: Render Dashboard → New → Blueprint → select this repository.
+# Apply with: Render Dashboard -> New -> Blueprint -> select this repository.
 # Fill every `sync: false` variable in the dashboard before the first deploy.
 
 services:
@@ -14,7 +13,7 @@ services:
     runtime: node
     plan: starter
     region: singapore
-    rootDir: quickmenu-qr-build-kit/quickmenu-qr-build-kit
+    rootDir: .
     buildCommand: npm ci && npm run build:shared && npm run build:api
     preDeployCommand: npm run db:migrate
     startCommand: node apps/api/dist/server.js
@@ -70,7 +69,7 @@ services:
     runtime: node
     plan: starter
     region: singapore
-    rootDir: quickmenu-qr-build-kit/quickmenu-qr-build-kit
+    rootDir: .
     buildCommand: npm ci && npm run build:shared && npm run build:api
     preDeployCommand: npm run db:migrate
     startCommand: node apps/api/dist/server.js
