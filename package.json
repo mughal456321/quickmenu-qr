@@ -36,6 +36,8 @@
     "db:reset": "cd apps/api && npm run db:reset",
     "db:seed": "cd apps/api && npm run db:seed",
     "db:local": "node scripts/dev-db.mjs",
+    "db:stats": "node scripts/db-stats.mjs",
+    "db:console": "node scripts/db-console.mjs",
     "prepare": "husky"
   },
   "devDependencies": {

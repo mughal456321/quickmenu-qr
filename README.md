@@ -93,11 +93,30 @@ remains the default path and CI still uses it.
 | `npm run db:reset` | Drop all public tables and re-apply migrations |
 | `npm run db:seed` | Populate the demo restaurant (idempotent) |
 | `npm run db:local` | Run PostgreSQL from node_modules instead of Docker |
+| `npm run db:stats` | Row counts for every table plus the latest orders |
+| `npm run db:console -- "select …"` | Run one SQL statement and print a table |
 | `npm run lint` | ESLint across all packages |
 | `npm run typecheck` | `tsc --noEmit` across all packages |
 | `npm test` | API + shared + web unit tests |
 | `npm run test:coverage` | API tests with V8 coverage |
 | `npm run test:e2e` | Playwright flows (order, dashboard, kitchen) |
+
+### Viewing the database
+
+Two scripts use the `pg` driver that is already installed, so no `psql`, pgAdmin or Docker is needed.
+
+```powershell
+npm run db:stats
+```
+prints every table with its row count plus the latest orders.
+
+```powershell
+npm run db:console -- "select table_number, qr_token from restaurant_tables order by table_number"
+npm run db:console -- "select order_number, status, total from orders order by created_at desc limit 5"
+```
+runs one SQL statement against the same `DATABASE_URL` the API uses and prints the rows. Run `npm run db:console` with no SQL to list the tables.
+
+Both read `apps/api/.env`, so they connect to the same database as the API. They fail with a clear message if `npm run db:local` (or Docker) is not running. A GUI client (HeidiSQL, Beekeeper, DBeaver) also works with host `localhost`, port `5432`, database `quickmenu`, user/password `quickmenu`/`quickmenu`.
 
 Local Playwright can use an installed browser instead of the bundled one:
 `PLAYWRIGHT_CHANNEL=msedge npm run test:e2e` (PowerShell:
