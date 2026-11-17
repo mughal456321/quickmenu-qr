@@ -12,9 +12,13 @@
  * Docker Compose remains the default documented path; this is the fallback.
  */
 import { existsSync } from "node:fs";
+import { createRequire } from "node:module";
 import net from "node:net";
 import path from "node:path";
 import EmbeddedPostgres from "embedded-postgres";
+
+const require = createRequire(import.meta.url);
+const { Client } = require("pg");
 
 const PORT = Number(process.env.LOCAL_PG_PORT ?? 5432);
 const USER = "quickmenu";
@@ -46,15 +50,39 @@ function portInUse(port) {
   });
 }
 
+/** True when the port answers with this project's database and credentials. */
+async function databaseAnswers() {
+  const client = new Client({
+    connectionString: `postgres://${USER}:${PASSWORD}@127.0.0.1:${PORT}/quickmenu`,
+    connectionTimeoutMillis: 3000,
+  });
+  try {
+    await client.connect();
+    await client.query("select 1");
+    return true;
+  } catch {
+    return false;
+  } finally {
+    await client.end().catch(() => {});
+  }
+}
+
 async function main() {
   // A second `db:local` used to crash with a raw postmaster.pid error because
-  // the first instance already owns the port. Say what is happening instead.
+  // the first instance already owns the port. Say what is happening instead,
+  // and check whether the listener is really this project's database.
   if (await portInUse(PORT)) {
-    console.log(`db:local: something is already listening on 127.0.0.1:${PORT}.`);
-    console.log("If it is this project's PostgreSQL, it is already running - use it as is.");
-    console.log("If it is an instance started by an earlier run, stop it first:");
-    console.log(`  ${PG_CTL} -D .pgdata stop -m fast`);
-    console.log("If it is Docker, run `docker compose down` (or keep using it).");
+    if (await databaseAnswers()) {
+      console.log(`db:local: this project's PostgreSQL is already running on 127.0.0.1:${PORT}.`);
+      console.log("Use it as is - do not start a second one.");
+      console.log("To stop it, press Ctrl+C in the terminal that started it.");
+    } else {
+      console.log(`db:local: port ${PORT} is used by something that is not this project's database.`);
+      console.log("Stop that program, or start on another port:");
+      console.log("  $env:LOCAL_PG_PORT=5433; npm run db:local");
+      console.log("If a previous run of this script left a lock behind, clear it with:");
+      console.log(`  ${PG_CTL} -D .pgdata stop -m fast`);
+    }
     return;
   }
 

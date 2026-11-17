@@ -87,6 +87,21 @@ export async function start(): Promise<void> {
   const app = createApp();
   const server = createServer(app);
   attachRealtime(server);
+
+  // Without this listener an occupied port surfaces as an unhandled 'error'
+  // event and the raw EADDRINUSE stack, which says nothing useful.
+  server.on("error", (error: NodeJS.ErrnoException) => {
+    if (error.code === "EADDRINUSE") {
+      logger.error(
+        { port: env.PORT },
+        `API port ${env.PORT} is already in use. Stop the other instance or set PORT to a free port.`,
+      );
+      process.exit(1);
+    }
+    logger.error({ err: error }, "API server error");
+    process.exit(1);
+  });
+
   server.listen(env.PORT, () => {
     logger.info({ port: env.PORT, ws: "/ws" }, "API listening");
   });
@@ -108,5 +123,13 @@ export async function start(): Promise<void> {
 // Entry point: start the server when this file is run directly.
 // Tests import `createApp` and set NODE_ENV=test, so skip auto-start there.
 if (env.NODE_ENV !== "test") {
-  start();
+  start().catch((error: unknown) => {
+    const message = error instanceof Error ? error.message : String(error);
+    logger.error({ err: error }, "API failed to start");
+    console.error(`\nAPI could not start: ${message}`);
+    console.error(
+      "If this is a connection error, PostgreSQL is not running: start `npm run db:local` in another terminal.\n",
+    );
+    process.exit(1);
+  });
 }
